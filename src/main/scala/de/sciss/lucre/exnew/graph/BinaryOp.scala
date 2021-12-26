@@ -20,11 +20,11 @@ import de.sciss.lucre.Adjunct.{HasDefault, Num, NumDiv, NumDouble, NumInt, NumLo
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
 import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts, Txn}
-import de.sciss.serial.DataOutput
+import de.sciss.serial.{DataOutput, Writable}
 import de.sciss.span.SpanLike
 
 object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {
-  abstract class Op[A, B, C] extends Product {
+  abstract class Op[A, B, C] extends Product with Writable {
     def apply(a: A, b: B): C
   }
 
@@ -34,6 +34,18 @@ object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {
     def name: String
 
     override def toString: String = name
+
+    override def write(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      out.writeUTF(name)
+      this match {
+        case p: ProductWithAdjuncts =>
+          val adj = p.adjuncts
+          out.writeShort(adj.size)
+          adj.foreach(_.write(out))
+        case _ => ()
+      }
+    }
   }
 
   type Adjuncts = scala.List[Adjunct]
@@ -1316,16 +1328,19 @@ object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {
 
   // ---- Impl ----
 
+  private object Expanded {
+    final val typeId = 0x42696E4F // "BinO"
+  }
   private[lucre] final class Expanded[T <: Txn[T], A1, A2, A3, A](op: BinaryOp.Op[A1, A2, A],
                                                                    a: IExpr[T, A1], b: IExpr[T, A2])
                                                                   (implicit protected val targets: ITargets[T])
     extends IExpr[T, A] with IChangeEventImpl[T, A] {
 
-    override protected def typeId: Int = ???
+    override protected def typeId: Int = Expanded.typeId
 
     override protected def writeData(out: DataOutput): Unit = {
       out.writeByte(0)  // serialization version
-      ??? // op.write(out)
+      op.write(out)
       a.write(out)
       b.write(out)
     }

@@ -23,14 +23,11 @@ import de.sciss.model.Change
 import de.sciss.serial.{DataInput, DataOutput}
 
 object IntExObj {
+  private lazy val _init: Unit = IntObj.registerExtension(IntEx)
+
+  def init(): Unit = _init
+
   def apply[T <: Txn[T]](ex: Ex[Int])(implicit tx: T): IntObj[T] = {
-    import ExImport._
-    import de.sciss.lucre.exnew.graph._
-//    val ex: Ex[Int] = "in".attr(0) * 2
-    //    val vr = Var(0)
-    //    val tr = Trig()
-    //    ex.changed --> Act(vr.inc, tr)
-    //    val res: Ex[Int] = vr.latch(tr)
     val tgt = Targets[T]()
     new IntEx[T](ex, tgt, tx)
   }

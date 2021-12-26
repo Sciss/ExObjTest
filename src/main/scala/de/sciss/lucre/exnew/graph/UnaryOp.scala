@@ -23,11 +23,11 @@ import de.sciss.lucre.exnew.graph.impl.MappedIExpr
 import de.sciss.lucre.exnew.impl.IEventImpl
 import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts, Txn}
 import de.sciss.model.Change
-import de.sciss.serial.DataOutput
+import de.sciss.serial.{DataOutput, Writable}
 import de.sciss.span.{Span => _Span, SpanLike => _SpanLike}
 
 object UnaryOp extends ProductReader[UnaryOp[_, _]] {
-  abstract class Op[A1, A2] extends Product {
+  abstract class Op[A1, A2] extends Product with Writable {
     def apply(a: A1): A2
   }
 
@@ -37,6 +37,18 @@ object UnaryOp extends ProductReader[UnaryOp[_, _]] {
     override def toString: String = name
 
     def name: String
+
+    override def write(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      out.writeUTF(name)
+      this match {
+        case p: ProductWithAdjuncts =>
+          val adj = p.adjuncts
+          out.writeShort(adj.size)
+          adj.foreach(_.write(out))
+        case _ => ()
+      }
+    }
   }
 
   type Adjuncts = scala.List[Adjunct]
@@ -1240,15 +1252,18 @@ object UnaryOp extends ProductReader[UnaryOp[_, _]] {
 
   // ---- Impl ----
 
+  private object Expanded {
+    final val typeId = 0x556E614F // "UnaO"
+  }
   private[lucre] final class Expanded[T <: Txn[T], A1, A](op: Op[A1, A], a: IExpr[T, A1])
                                                           (implicit targets: ITargets[T])
     extends MappedIExpr[T, A1, A](a) with IEventImpl[T, Change[A]] {
 
-    override protected def typeId: Int = ???
+    override protected def typeId: Int = Expanded.typeId
 
     override protected def writeData(out: DataOutput): Unit = {
       out.writeByte(0)  // serialization version
-      ??? // op.write(out)
+      op.write(out)
       a.write(out)
     }
 

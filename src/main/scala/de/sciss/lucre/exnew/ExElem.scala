@@ -144,6 +144,10 @@ object ExElem {
   implicit def vecFormat[A]: ConstFormat[Vec[A]]  = VecFmt.asInstanceOf[ConstFormat[Vec[A]]]
   implicit def setFormat[A]: ConstFormat[Set[A]]  = SetFmt.asInstanceOf[ConstFormat[Set[A]]]
 
+  def read[A](in: DataInput): Ex[A] = format[Ex[A]].read(in)
+
+  def write[A](ex: Ex[A], out: DataOutput): Unit = format[Ex[A]].write(ex, out)
+
   private object Fmt extends ConstFormat[Any] {
     def write(v: Any, out: DataOutput): Unit  = {
       val ref = new RefMapOut(out)

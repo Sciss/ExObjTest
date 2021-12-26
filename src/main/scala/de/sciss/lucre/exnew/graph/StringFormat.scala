@@ -22,12 +22,15 @@ import de.sciss.serial.DataOutput
 import java.util.Locale
 
 object StringFormat extends ProductReader[StringFormat] {
+  private object Expanded {
+    final val typeId = 0x53747246 // "StrF"
+  }
   // XXX TODO: should listen to `in`
   private final class Expanded[T <: Txn[T]](in: IExpr[T, String], args: Seq[IExpr[T, Any]])
                                            (implicit protected val targets: ITargets[T])
     extends IExpr[T, String] with IChangeEventImpl[T, String] {
 
-    override protected def typeId: Int = ???
+    override protected def typeId: Int = Expanded.typeId
 
     override protected def writeData(out: DataOutput): Unit = {
       out.writeByte(0)  // serialization version

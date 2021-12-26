@@ -42,10 +42,13 @@ sealed trait CaseDef[A] extends Ex[A] with ProductWithAdjuncts {
 }
 
 object Quote extends ProductReader[Quote[_]] {
+  private object ExpandedImpl {
+    final val typeId = 0x51756F74 // "Quot"
+  }
   private final class ExpandedImpl[T <: Txn[T], A](in: IExpr[T, A])(implicit val fromAny: FromAny[A])
     extends Expanded[T, A] {
 
-    override protected def typeId: Int = ???
+    override protected def typeId: Int = ExpandedImpl.typeId
 
     override protected def writeData(out: DataOutput): Unit = {
       out.writeByte(0)  // serialization version
@@ -205,12 +208,15 @@ object Var extends ProductReader[Var[_]] {
 //      obs.dispose()
 //  }
 
+  private object ExpandedImpl {
+    final val typeId = 0x56617220 // "Var "
+  }
   private final class ExpandedImpl[T <: Txn[T], A](init: IExpr[T, A])
                                                   (implicit protected val targets: ITargets[T],
                                                    val fromAny: FromAny[A])
     extends Expanded[T, A] with IChangeGeneratorEvent[T, A] {
 
-    override protected def typeId: Int = ???
+    override protected def typeId: Int = ExpandedImpl.typeId
 
     override protected def writeData(out: DataOutput): Unit = {
       out.writeByte(0)  // serialization version

@@ -14,7 +14,7 @@
 package de.sciss.lucre.exnew.graph.impl
 
 import de.sciss.lucre.Txn.peer
-import de.sciss.lucre.exnew.{Context, IChangeEvent, IExpr, IPull, IPush, ITargets}
+import de.sciss.lucre.exnew.{Context, ExElem, IChangeEvent, IExpr, IPull, IPush, ITargets}
 import de.sciss.lucre.exnew.graph.{Ex, It}
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
 import de.sciss.lucre.{Caching, Disposable, Txn}
@@ -156,18 +156,21 @@ abstract class ExpandedMapSeqLike[T <: Txn[T], A, P, B](in: IExpr[T, Seq[A]], it
   }
 }
 
+private object ExpandedMapSeq {
+  final val typeId = 0x4D617053 // "MapS"
+}
 final class ExpandedMapSeq[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
                                               /* closure: Graph, */ fun: Ex[B])
                                              (implicit targets: ITargets[T])
   extends ExpandedMapSeqLike[T, A, B, B](in, it, fun) {
 
-  override protected def typeId: Int = ???
+  override protected def typeId: Int = ExpandedMapSeq.typeId
 
   override protected def writeData(out: DataOutput): Unit = {
     out.writeByte(0)  // serialization version
     in  .write(out)
     it  .write(out)
-    ??? // fun .write(out)
+    ExElem.write(fun, out)
   }
 
   override def toString: String = s"$in.map($fun)"
@@ -175,18 +178,21 @@ final class ExpandedMapSeq[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.Expan
   protected def append(b: mutable.Builder[B, _], cc: B): Unit = b += cc
 }
 
+private object ExpandedFlatMapSeq {
+  final val typeId = 0x466C4D53 // "FlMS"
+}
 final class ExpandedFlatMapSeq[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
                                                   /* closure: Graph, */ fun: Ex[Seq[B]])
                                                  (implicit targets: ITargets[T])
   extends ExpandedMapSeqLike[T, A, Seq[B], B](in, it, fun) {
 
-  override protected def typeId: Int = ???
+  override protected def typeId: Int = ExpandedFlatMapSeq.typeId
 
   override protected def writeData(out: DataOutput): Unit = {
     out.writeByte(0)  // serialization version
     in  .write(out)
     it  .write(out)
-    ??? // fun .write(out)
+    ExElem.write(fun, out)
   }
 
   override def toString: String = s"$in.flatMap($fun)"
@@ -195,18 +201,21 @@ final class ExpandedFlatMapSeq[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.E
     b ++= cc
 }
 
+private object ExpandedFlatMapSeqOption {
+  final val typeId = 0x464D534F // "FMSO"
+}
 final class ExpandedFlatMapSeqOption[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
                                                         /* closure: Graph, */ fun: Ex[Option[B]])
                                                        (implicit targets: ITargets[T])
   extends ExpandedMapSeqLike[T, A, Option[B], B](in, it, fun) {
 
-  override protected def typeId: Int = ???
+  override protected def typeId: Int = ExpandedFlatMapSeqOption.typeId
 
   override protected def writeData(out: DataOutput): Unit = {
     out.writeByte(0)  // serialization version
     in  .write(out)
     it  .write(out)
-    ??? // fun .write(out)
+    ExElem.write(fun, out)
   }
 
   override def toString: String = s"$in.flatMap($fun)"
@@ -237,18 +246,21 @@ abstract class ExpandedMapOptionLike[T <: Txn[T], A, P, B](in: IExpr[T, Option[A
   protected final def map[A1, B1](in: Option[A1])(body: A1 => B1): Option[B1] = in.map(body)
 }
 
+private object ExpandedMapOption {
+  final val typeId = 0x4D61704F // "MapO"
+}
 final class ExpandedMapOption[T <: Txn[T], A, B](in: IExpr[T, Option[A]], it: It.Expanded[T, A],
                                                  fun: Ex[B])
                                                 (implicit targets: ITargets[T])
   extends ExpandedMapOptionLike[T, A, B, B](in, it, fun) {
 
-  override protected def typeId: Int = ???
+  override protected def typeId: Int = ExpandedMapOption.typeId
 
   override protected def writeData(out: DataOutput): Unit = {
     out.writeByte(0)  // serialization version
     in  .write(out)
     it  .write(out)
-    ??? // fun .write(out)
+    ExElem.write(fun, out)
   }
 
   override def toString: String = s"$in.map($fun)"
@@ -263,18 +275,21 @@ final class ExpandedMapOption[T <: Txn[T], A, B](in: IExpr[T, Option[A]], it: It
     }
 }
 
+private object ExpandedFlatMapOption {
+  final val typeId = 0x466C4D4F // "FlMO"
+}
 final class ExpandedFlatMapOption[T <: Txn[T], A, B](in: IExpr[T, Option[A]], it: It.Expanded[T, A],
                                                      fun: Ex[Option[B]])
                                                     (implicit targets: ITargets[T])
   extends ExpandedMapOptionLike[T, A, Option[B], B](in, it, fun) {
 
-  override protected def typeId: Int = ???
+  override protected def typeId: Int = ExpandedFlatMapOption.typeId
 
   override protected def writeData(out: DataOutput): Unit = {
     out.writeByte(0)  // serialization version
     in  .write(out)
     it  .write(out)
-    ??? // fun .write(out)
+    ExElem.write(fun, out)
   }
 
   override def toString: String = s"$in.flatMap($fun)"

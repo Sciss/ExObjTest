@@ -24,11 +24,14 @@ import de.sciss.serial.DataOutput
 
 import scala.concurrent.stm.Ref
 
+private object ExpandedObjAttr {
+  final val typeId = 0x4F624174 // "ObAt"
+}
 final class ExpandedObjAttr[T <: Txn[T], A](obj: IExpr[T, Obj], key: String)
                                            (implicit protected val targets: ITargets[T], bridge: Bridge[A])
   extends IExpr[T, Option[A]] with IChangeGeneratorEvent[T, Option[A]] with Caching {
 
-  override protected def typeId: Int = ???
+  override protected def typeId: Int = ExpandedObjAttr.typeId
 
   override protected def writeData(out: DataOutput): Unit = {
     out.writeByte(0)  // serialization version

@@ -19,12 +19,18 @@ import de.sciss.lucre.{Exec, Txn}
 import de.sciss.serial.DataOutput
 
 object Const {
+  private object Expanded {
+    final val typeId = 0x436F6E73 // "Cons"
+  }
   private[sciss] final class Expanded[T <: Txn[T], A](peer: A)
     extends IExpr[T, A] {
 
-    override protected def typeId: Int = ???
+    override protected def typeId: Int = Expanded.typeId
 
-    override protected def writeData(out: DataOutput): Unit = ???
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      ExElem.format[A].write(peer, out)
+    }
 
     override def toString: String = peer.toString
 

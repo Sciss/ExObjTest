@@ -18,10 +18,10 @@ import de.sciss.lucre.Adjunct.{NumDouble, NumFrac, Widen2}
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
 import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts, Txn}
-import de.sciss.serial.DataOutput
+import de.sciss.serial.{DataOutput, Writable}
 
 object QuinaryOp extends ProductReader[QuinaryOp[_, _, _, _, _, _]] {
-  abstract class Op[A, B, C, D, E, F] extends Product {
+  abstract class Op[A, B, C, D, E, F] extends Product with Writable {
     def apply(a: A, b: B, c: C, d: D, e: E): F
   }
 
@@ -31,6 +31,18 @@ object QuinaryOp extends ProductReader[QuinaryOp[_, _, _, _, _, _]] {
     def name: String
 
     override def toString: String = name
+
+    override def write(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      out.writeUTF(name)
+      this match {
+        case p: ProductWithAdjuncts =>
+          val adj = p.adjuncts
+          out.writeShort(adj.size)
+          adj.foreach(_.write(out))
+        case _ => ()
+      }
+    }
   }
 
   type Adjuncts = scala.List[Adjunct]
@@ -159,6 +171,9 @@ object QuinaryOp extends ProductReader[QuinaryOp[_, _, _, _, _, _]] {
     def adjuncts: List[Adjunct] = w :: num :: Nil
   }
 
+  private object Expanded {
+    final val typeId = 0x5175694F // "QuiO"
+  }
   private[lucre] final class Expanded[T <: Txn[T], A1, A2, A3, A4, A5, A](op: QuinaryOp.Op[A1, A2, A3, A4, A5, A],
                                                                            a: IExpr[T, A1], b: IExpr[T, A2],
                                                                            c: IExpr[T, A3], d: IExpr[T, A4],
@@ -166,11 +181,11 @@ object QuinaryOp extends ProductReader[QuinaryOp[_, _, _, _, _, _]] {
                                                                           (implicit protected val targets: ITargets[T])
     extends IExpr[T, A] with IChangeEventImpl[T, A] {
 
-    override protected def typeId: Int = ???
+    override protected def typeId: Int = Expanded.typeId
 
     override protected def writeData(out: DataOutput): Unit = {
       out.writeByte(0)  // serialization version
-      ??? // op.write(out)
+      op.write(out)
       a.write(out)
       b.write(out)
       c.write(out)

@@ -92,16 +92,15 @@ object Attr extends ProductReader[Attr[_]] {
 
       val ctxHead   = new StmObjCtxCellView[T](ctx.attr, head)
       val ctxFull   = loop(ctxHead, firstSub, tail)
-      ???
-// EEE
-//      ctx.selfOption match {
-//        case Some(self) =>
-//          val objHead   = new StmObjAttrMapCellView[T](self.attr, head, tx)
-//          val objFull   = loop(objHead, firstSub, tail)
-//          ctxFull orElse objFull
-//        case None =>
-//          ctxFull
-//      }
+
+      ctx.selfOption match {
+        case Some(self) =>
+          val objHead   = new StmObjAttrMapCellView[T](self.attr, head, tx)
+          val objFull   = loop(objHead, firstSub, tail)
+          ctxFull orElse objFull
+        case None =>
+          ctxFull
+      }
 
     } else {
       val ctxFull = bridge.contextCellView[T](key)
@@ -166,6 +165,7 @@ object Attr extends ProductReader[Attr[_]] {
       firstVr match {
         case Some(vr) =>
           vr.fromAny.fromAny(v.get).foreach { vT =>
+            // EEE
             ??? // vr.update(new Const.Expanded(vT))
           }
         case None =>
@@ -197,42 +197,39 @@ object Attr extends ProductReader[Attr[_]] {
 
       val ctxHead             = new StmObjCtxCellView[T](ctx.attr, head)
       val (ctxFullP, lastSub) = loop(ctxHead, firstSub, tail)
-      ???
-// EEE
-//      ctx.selfOption match {
-//        case Some(self) =>
-//          val objHead       = new StmObjAttrMapCellView[T](self.attr, head, tx)
-//          val (objFullP, _) = loop(objHead, firstSub, tail)
-//          new NestedVarCellView(ctxFullP, objFullP, lastSub)
-//
-//        case None =>
-//          new CatVarImpl[T, LObj[T], A](ctxFullP)({ implicit tx => child =>
-//            bridge.cellView(child, lastSub)
-//          })
-//      }
+
+      ctx.selfOption match {
+        case Some(self) =>
+          val objHead       = new StmObjAttrMapCellView[T](self.attr, head, tx)
+          val (objFullP, _) = loop(objHead, firstSub, tail)
+          new NestedVarCellView(ctxFullP, objFullP, lastSub)
+
+        case None =>
+          new CatVarImpl[T, LObj[T], A](ctxFullP)({ implicit tx => child =>
+            bridge.cellView(child, lastSub)
+          })
+      }
 
     } else {
-      ???
-// EEE
-//      ctx.selfOption match {
-//        case Some(self) =>
-//          val firstP  = bridge.contextCellView[T](key)
-//          val secondP = bridge.cellView(self, key)
-//          val opt: Option[Form[T]] = ctx.attr.get(key)
-//          /*val firstVr =*/ opt match {
-//          case Some(ex: Var.Expanded[T, _]) =>
-//            // work-around for Scala 3.0.2:
-//            new FlatVarCellView(firstP, Some(ex), secondP)
-//          // Some(ex)
-//          case _                            =>
-//            new FlatVarCellView(firstP, None, secondP)
-//          // None
-//        }
-//        // new FlatVarCellView(firstP, firstVr, secondP)
-//
-//        case None =>  // if there is no 'self', simply give up on the idea of attributes
-//          CellView.Var.empty
-//      }
+      ctx.selfOption match {
+        case Some(self) =>
+          val firstP  = bridge.contextCellView[T](key)
+          val secondP = bridge.cellView(self, key)
+          val opt: Option[Form[T]] = ctx.attr.get(key)
+          /*val firstVr =*/ opt match {
+          case Some(ex: Var.Expanded[T, _]) =>
+            // work-around for Scala 3.0.2:
+            new FlatVarCellView(firstP, Some(ex), secondP)
+          // Some(ex)
+          case _                            =>
+            new FlatVarCellView(firstP, None, secondP)
+          // None
+        }
+        // new FlatVarCellView(firstP, firstVr, secondP)
+
+        case None =>  // if there is no 'self', simply give up on the idea of attributes
+          CellView.Var.empty
+      }
     }
   }
 
@@ -273,11 +270,14 @@ object Attr extends ProductReader[Attr[_]] {
       override def adjuncts: scala.List[Adjunct] = bridge :: Nil
     }
 
+    private object Expanded {
+      final val typeId = 0x41745744 // "AtWD"
+    }
     private[lucre] final class Expanded[T <: Txn[T], A](key: String, attrView: CellView[T, Option[A]], default: IExpr[T, A])
                                                        (implicit protected val targets: ITargets[T])
       extends IExpr[T, A] with IChangeGeneratorEvent[T, A] {
 
-      override protected def typeId: Int = ???
+      override protected def typeId: Int = Attr.WithDefault.Expanded.typeId
 
       override protected def writeData(out: DataOutput): Unit = {
         out.writeByte(0)  // serialization version
@@ -345,11 +345,14 @@ object Attr extends ProductReader[Attr[_]] {
 //    def transform(f: Ex[A] => Ex[A]): Act = set(f(self))
   }
 
+  private object Expanded {
+    final val typeId = 0x41747472 // "Attr"
+  }
   private[lucre] final class Expanded[T <: Txn[T], A](key: String, attrView: CellView[T, Option[A]])
                                                      (implicit protected val targets: ITargets[T])
     extends IExpr[T, Option[A]] with IChangeGeneratorEvent[T, Option[A]] {
 
-    override protected def typeId: Int = ???
+    override protected def typeId: Int = Attr.Expanded.typeId
 
     override protected def writeData(out: DataOutput): Unit = {
       out.writeByte(0)  // serialization version

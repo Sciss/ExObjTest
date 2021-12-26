@@ -30,10 +30,13 @@ object It extends ProductReader[It[_]] {
     def ref: AnyRef
   }
 
+  private object ExpandedImpl {
+    final val typeId = 0x49742020 // "It  "
+  }
   private final class ExpandedImpl[T <: Txn[T], A](val ref: AnyRef)(implicit protected val targets: ITargets[T])
     extends Expanded[T, A] with IChangeGeneratorEvent[T, A] {
 
-    override protected def typeId: Int = ???
+    override protected def typeId: Int = ExpandedImpl.typeId
 
     override protected def writeData(out: DataOutput): Unit = ???
 

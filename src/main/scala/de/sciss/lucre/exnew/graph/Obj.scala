@@ -215,13 +215,16 @@ object Obj {
   object As extends ProductReader[Ex[Option[_]]] {
     def apply[A](obj: Ex[Obj])(implicit bridge: Bridge[A]): Ex[Option[A]] = Impl(obj)
 
+    private object Expanded {
+      final val typeId = 0x4F624173 // "ObAs"
+    }
     // XXX TODO --- we should use cell-views instead, because this way we won't notice
     // changes to the value representation (e.g. a `StringObj.Var` contents change)
     private final class Expanded[T <: Txn[T], A](in: IExpr[T, Obj])
                                                 (implicit targets: ITargets[T], bridge: Obj.Bridge[A])
       extends MappedIExpr[T, Obj, Option[A]](in) {
 
-      override protected def typeId: Int = ???
+      override protected def typeId: Int = Expanded.typeId
 
       override protected def writeData(out: DataOutput): Unit = {
         out.writeByte(0)  // serialization version
