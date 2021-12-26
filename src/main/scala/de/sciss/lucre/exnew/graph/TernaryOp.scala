@@ -18,6 +18,7 @@ import de.sciss.lucre.Adjunct.{Num, Widen2}
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
 import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts, Txn}
+import de.sciss.serial.DataOutput
 
 import scala.util.control.NonFatal
 
@@ -240,13 +241,26 @@ object TernaryOp extends ProductReader[TernaryOp[_, _, _, _]] {
 
   private[lucre] final class Expanded[T <: Exec[T], A1, A2, A3, A](op: TernaryOp.Op[A1, A2, A3, A],
                                                                    a: IExpr[T, A1], b: IExpr[T, A2],
-                                                                   c: IExpr[T, A3], tx0: T)
+                                                                   c: IExpr[T, A3])
                                                                   (implicit protected val targets: ITargets[T])
     extends IExpr[T, A] with IChangeEventImpl[T, A] {
 
-    a.changed.--->(this)(tx0)
-    b.changed.--->(this)(tx0)
-    c.changed.--->(this)(tx0)
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      ??? // op.write(out)
+      a.write(out)
+      b.write(out)
+      c.write(out)
+    }
+
+    def connect()(implicit tx: T): this.type = {
+      a.changed.--->(this)
+      b.changed.--->(this)
+      c.changed.--->(this)
+      this
+    }
 
     override def toString: String = s"TernaryOp($op, $a, $b, $c)"
 
@@ -298,6 +312,6 @@ final case class TernaryOp[A1, A2, A3, A](op: TernaryOp.Op[A1, A2, A3, A], a: Ex
     val ax = a.expand[T]
     val bx = b.expand[T]
     val cx = c.expand[T]
-    new TernaryOp.Expanded[T, A1, A2, A3, A](op, ax, bx, cx, tx)
+    new TernaryOp.Expanded[T, A1, A2, A3, A](op, ax, bx, cx).connect()
   }
 }

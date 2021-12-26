@@ -20,6 +20,7 @@ import de.sciss.lucre.Adjunct.{HasDefault, Num, NumDiv, NumDouble, NumInt, NumLo
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
 import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts, Txn}
+import de.sciss.serial.DataOutput
 import de.sciss.span.SpanLike
 
 object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {
@@ -1316,12 +1317,24 @@ object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {
   // ---- Impl ----
 
   private[lucre] final class Expanded[T <: Exec[T], A1, A2, A3, A](op: BinaryOp.Op[A1, A2, A],
-                                                                   a: IExpr[T, A1], b: IExpr[T, A2], tx0: T)
+                                                                   a: IExpr[T, A1], b: IExpr[T, A2])
                                                                   (implicit protected val targets: ITargets[T])
     extends IExpr[T, A] with IChangeEventImpl[T, A] {
 
-    a.changed.--->(this)(tx0)
-    b.changed.--->(this)(tx0)
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      ??? // op.write(out)
+      a.write(out)
+      b.write(out)
+    }
+
+    def connect()(implicit tx: T): this.type = {
+      a.changed.--->(this)
+      b.changed.--->(this)
+      this
+    }
 
     override def toString: String = s"BinaryOp($op, $a, $b)"
 
@@ -1367,6 +1380,6 @@ final case class BinaryOp[A1, A2, A3, A](op: BinaryOp.Op[A1, A2, A], a: Ex[A1], 
     import ctx.targets
     val ax = a.expand[T]
     val bx = b.expand[T]
-    new BinaryOp.Expanded[T, A1, A2, A3, A](op, ax, bx, tx)
+    new BinaryOp.Expanded[T, A1, A2, A3, A](op, ax, bx).connect()
   }
 }

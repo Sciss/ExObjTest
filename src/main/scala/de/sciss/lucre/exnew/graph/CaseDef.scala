@@ -20,6 +20,7 @@ import de.sciss.lucre.exnew.impl.IChangeGeneratorEvent
 import de.sciss.lucre.exnew.{Arrow, Context, IChangeEvent, IExpr, IPull, ITargets, graph}
 import de.sciss.lucre.{Adjunct, Disposable, ProductWithAdjuncts, Txn}
 import de.sciss.model.Change
+import de.sciss.serial.DataOutput
 
 import scala.concurrent.stm.Ref
 
@@ -43,6 +44,14 @@ sealed trait CaseDef[A] extends Ex[A] with ProductWithAdjuncts {
 object Quote extends ProductReader[Quote[_]] {
   private final class ExpandedImpl[T <: Txn[T], A](in: IExpr[T, A])(implicit val fromAny: FromAny[A])
     extends Expanded[T, A] {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in      .write(out)
+      fromAny .write(out)
+    }
 
     def select(value: Any)(implicit tx: T): Boolean =
       fromAny.fromAny(value) match {
@@ -196,15 +205,26 @@ object Var extends ProductReader[Var[_]] {
 //      obs.dispose()
 //  }
 
-  private final class ExpandedImpl[T <: Txn[T], A](init: IExpr[T, A], tx0: T)
+  private final class ExpandedImpl[T <: Txn[T], A](init: IExpr[T, A])
                                                   (implicit protected val targets: ITargets[T],
                                                    val fromAny: FromAny[A])
     extends Expanded[T, A] with IChangeGeneratorEvent[T, A] {
 
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      init    .write(out)
+      fromAny .write(out)
+    }
+
     private[this] val ref     = Ref(init)
     private[this] val selRef  = Ref.make[A]()
 
-    init.changed.--->(changed)(tx0)
+    def connect()(implicit tx: T): this.type = {
+      init.changed.--->(changed)
+      this
+    }
 
     def apply()(implicit tx: T): IExpr[T, A] = ref()
 
@@ -285,7 +305,7 @@ object Var extends ProductReader[Var[_]] {
 
     protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
       import ctx.targets
-      new Var.ExpandedImpl[T, A](init.expand[T], tx)
+      new Var.ExpandedImpl[T, A](init.expand[T]).connect()
     }
   }
 

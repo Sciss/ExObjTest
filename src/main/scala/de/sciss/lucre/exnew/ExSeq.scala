@@ -18,10 +18,19 @@ import de.sciss.lucre.exnew.graph.impl.{ExpandedMapSeqIn, MappedIExpr}
 import de.sciss.lucre.exnew.graph.{Ex, It, Obj}
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
 import de.sciss.lucre.{Adjunct, ProductWithAdjuncts, Txn, expr}
+import de.sciss.serial.{DataOutput, TFormat, Writer}
 
 object ExSeq extends ProductReader[ExSeq[_]] {
   private final class Expanded[T <: Txn[T], A](elems: Seq[IExpr[T, A]])(implicit protected val targets: ITargets[T])
     extends IExpr[T, Seq[A]] with IChangeEventImpl[T, Seq[A]] {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      out.writeInt(elems.size)
+      elems.foreach(_.write(out))
+    }
 
     def init()(implicit tx: T): this.type = {
       elems.foreach { in =>
@@ -52,9 +61,18 @@ object ExSeq extends ProductReader[ExSeq[_]] {
   }
 
   private final class CountExpanded[T <: Txn[T], A](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                    fun: Ex[Boolean], tx0: T)
+                                                    fun: Ex[Boolean])
                                                    (implicit targets: ITargets[T], ctx: Context[T])
-    extends ExpandedMapSeqIn[T, A, Boolean, Int](in, it, fun, tx0) {
+    extends ExpandedMapSeqIn[T, A, Boolean, Int](in, it, fun) {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in  .write(out)
+      it  .write(out)
+      ??? // fun.write(out)
+    }
 
     override def toString: String = s"$in.count($fun)"
 
@@ -95,14 +113,23 @@ object ExSeq extends ProductReader[ExSeq[_]] {
       val inEx = in.expand[T]
       val itEx = it.expand[T]
       import ctx.targets
-      new CountExpanded[T, A](inEx, itEx, p, tx)
+      new CountExpanded[T, A](inEx, itEx, p).connect()
     }
   }
 
   private final class DropWhileExpanded[T <: Txn[T], A](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                        fun: Ex[Boolean], tx0: T)
+                                                        fun: Ex[Boolean])
                                                        (implicit targets: ITargets[T], ctx: Context[T])
-    extends ExpandedMapSeqIn[T, A, Boolean, Seq[A]](in, it, fun, tx0) {
+    extends ExpandedMapSeqIn[T, A, Boolean, Seq[A]](in, it, fun) {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in  .write(out)
+      it  .write(out)
+      ??? // fun .write(out)
+    }
 
     override def toString: String = s"$in.dropWhile($fun)"
 
@@ -150,14 +177,23 @@ object ExSeq extends ProductReader[ExSeq[_]] {
       val inEx = in.expand[T]
       val itEx = it.expand[T]
       import ctx.targets
-      new DropWhileExpanded[T, A](inEx, itEx, p, tx)
+      new DropWhileExpanded[T, A](inEx, itEx, p).connect()
     }
   }
 
   private final class ExistsExpanded[T <: Txn[T], A](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                     fun: Ex[Boolean], tx0: T)
+                                                     fun: Ex[Boolean])
                                                     (implicit targets: ITargets[T], ctx: Context[T])
-    extends ExpandedMapSeqIn[T, A, Boolean, Boolean](in, it, fun, tx0) {
+    extends ExpandedMapSeqIn[T, A, Boolean, Boolean](in, it, fun) {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in  .write(out)
+      it  .write(out)
+      ??? // fun .write(out)
+    }
 
     override def toString: String = s"$in.exists($fun)"
 
@@ -197,14 +233,23 @@ object ExSeq extends ProductReader[ExSeq[_]] {
       val inEx = in.expand[T]
       val itEx = it.expand[T]
       import ctx.targets
-      new ExistsExpanded[T, A](inEx, itEx, p, tx)
+      new ExistsExpanded[T, A](inEx, itEx, p).connect()
     }
   }
 
   private final class FilterExpanded[T <: Txn[T], A](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                     fun: Ex[Boolean], tx0: T)
+                                                     fun: Ex[Boolean])
                                                     (implicit targets: ITargets[T], ctx: Context[T])
-    extends ExpandedMapSeqIn[T, A, Boolean, Seq[A]](in, it, fun, tx0) {
+    extends ExpandedMapSeqIn[T, A, Boolean, Seq[A]](in, it, fun) {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in  .write(out)
+      it  .write(out)
+      ??? // fun .write(out)
+    }
 
     override def toString: String = s"$in.filter($fun)"
 
@@ -245,14 +290,23 @@ object ExSeq extends ProductReader[ExSeq[_]] {
       val inEx = in.expand[T]
       val itEx = it.expand[T]
       import ctx.targets
-      new FilterExpanded[T, A](inEx, itEx, p, tx)
+      new FilterExpanded[T, A](inEx, itEx, p).connect()
     }
   }
 
   private final class FilterNotExpanded[T <: Txn[T], A](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                        fun: Ex[Boolean], tx0: T)
+                                                        fun: Ex[Boolean])
                                                        (implicit targets: ITargets[T], ctx: Context[T])
-    extends ExpandedMapSeqIn[T, A, Boolean, Seq[A]](in, it, fun, tx0) {
+    extends ExpandedMapSeqIn[T, A, Boolean, Seq[A]](in, it, fun) {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in  .write(out)
+      it  .write(out)
+      ??? // fun .write(out)
+    }
 
     override def toString: String = s"$in.filterNot($fun)"
 
@@ -293,14 +347,23 @@ object ExSeq extends ProductReader[ExSeq[_]] {
       val inEx = in.expand[T]
       val itEx = it.expand[T]
       import ctx.targets
-      new FilterNotExpanded[T, A](inEx, itEx, p, tx)
+      new FilterNotExpanded[T, A](inEx, itEx, p).connect()
     }
   }
 
   private final class ForallExpanded[T <: Txn[T], A](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                     fun: Ex[Boolean], tx0: T)
+                                                     fun: Ex[Boolean])
                                                     (implicit targets: ITargets[T], ctx: Context[T])
-    extends ExpandedMapSeqIn[T, A, Boolean, Boolean](in, it, fun, tx0) {
+    extends ExpandedMapSeqIn[T, A, Boolean, Boolean](in, it, fun) {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in  .write(out)
+      it  .write(out)
+      ??? // fun .write(out)
+    }
 
     override def toString: String = s"$in.forall($fun)"
 
@@ -341,14 +404,23 @@ object ExSeq extends ProductReader[ExSeq[_]] {
       val inEx = in.expand[T]
       val itEx = it.expand[T]
       import ctx.targets
-      new ForallExpanded[T, A](inEx, itEx, p, tx)
+      new ForallExpanded[T, A](inEx, itEx, p).connect()
     }
   }
 
   private final class FindExpanded[T <: Txn[T], A](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                   fun: Ex[Boolean], tx0: T)
+                                                   fun: Ex[Boolean])
                                                   (implicit targets: ITargets[T], ctx: Context[T])
-    extends ExpandedMapSeqIn[T, A, Boolean, Option[A]](in, it, fun, tx0) {
+    extends ExpandedMapSeqIn[T, A, Boolean, Option[A]](in, it, fun) {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in  .write(out)
+      it  .write(out)
+      ??? // fun .write(out)
+    }
 
     override def toString: String = s"$in.find($fun)"
 
@@ -388,14 +460,23 @@ object ExSeq extends ProductReader[ExSeq[_]] {
       val inEx = in.expand[T]
       val itEx = it.expand[T]
       import ctx.targets
-      new FindExpanded[T, A](inEx, itEx, p, tx)
+      new FindExpanded[T, A](inEx, itEx, p).connect()
     }
   }
 
   private final class FindLastExpanded[T <: Txn[T], A](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                       fun: Ex[Boolean], tx0: T)
+                                                       fun: Ex[Boolean])
                                                       (implicit targets: ITargets[T], ctx: Context[T])
-    extends ExpandedMapSeqIn[T, A, Boolean, Option[A]](in, it, fun, tx0) {
+    extends ExpandedMapSeqIn[T, A, Boolean, Option[A]](in, it, fun) {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in  .write(out)
+      it  .write(out)
+      ??? // fun .write(out)
+    }
 
     override def toString: String = s"$in.findLast($fun)"
 
@@ -435,14 +516,23 @@ object ExSeq extends ProductReader[ExSeq[_]] {
       val inEx = in.expand[T]
       val itEx = it.expand[T]
       import ctx.targets
-      new FindLastExpanded[T, A](inEx, itEx, p, tx)
+      new FindLastExpanded[T, A](inEx, itEx, p).connect()
     }
   }
 
   private final class IndexWhereExpanded[T <: Txn[T], A](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                         fun: Ex[Boolean], tx0: T)
+                                                         fun: Ex[Boolean])
                                                         (implicit targets: ITargets[T], ctx: Context[T])
-    extends ExpandedMapSeqIn[T, A, Boolean, Int](in, it, fun, tx0) {
+    extends ExpandedMapSeqIn[T, A, Boolean, Int](in, it, fun) {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in  .write(out)
+      it  .write(out)
+      ??? // fun .write(out)
+    }
 
     override def toString: String = s"$in.indexWhere($fun)"
 
@@ -484,15 +574,23 @@ object ExSeq extends ProductReader[ExSeq[_]] {
       val inEx = in.expand[T]
       val itEx = it.expand[T]
       import ctx.targets
-      new IndexWhereExpanded[T, A](inEx, itEx, p, tx)
+      new IndexWhereExpanded[T, A](inEx, itEx, p).connect()
     }
   }
 
   // XXX TODO --- we should use cell-views instead, because this way we won't notice
   // changes to the value representation (e.g. a `StringObj.Var` contents change)
-  private final class SelectExpanded[T <: Txn[T], A](in: IExpr[T, Seq[Obj]], tx0: T)
+  private final class SelectExpanded[T <: Txn[T], A](in: IExpr[T, Seq[Obj]])
                                                     (implicit targets: ITargets[T], bridge: Obj.Bridge[A])
-    extends MappedIExpr[T, Seq[Obj], Seq[A]](in, tx0) {
+    extends MappedIExpr[T, Seq[Obj], Seq[A]](in) {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in    .write(out)
+      bridge.write(out)
+    }
 
     protected def mapValue(inValue: Seq[Obj])(implicit tx: T): Seq[A] =
       inValue.flatMap(_.peer[T].flatMap(bridge.tryParseObj(_)))
@@ -518,15 +616,23 @@ object ExSeq extends ProductReader[ExSeq[_]] {
     protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
       val inEx = in.expand[T]
       import ctx.targets
-      new SelectExpanded[T, A](inEx, tx)
+      new SelectExpanded[T, A](inEx).connect()
     }
   }
 
   // XXX TODO --- we should use cell-views instead, because this way we won't notice
   // changes to the value representation (e.g. a `StringObj.Var` contents change)
-  private final class SelectFirstExpanded[T <: Txn[T], A](in: IExpr[T, Seq[Obj]], tx0: T)
+  private final class SelectFirstExpanded[T <: Txn[T], A](in: IExpr[T, Seq[Obj]])
                                                          (implicit targets: ITargets[T], bridge: Obj.Bridge[A])
-    extends MappedIExpr[T, Seq[Obj], Option[A]](in, tx0) {
+    extends MappedIExpr[T, Seq[Obj], Option[A]](in) {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in    .write(out)
+      bridge.write(out)
+    }
 
     protected def mapValue(inValue: Seq[Obj])(implicit tx: T): Option[A] = {
       val it = inValue.iterator.flatMap(_.peer[T].flatMap(bridge.tryParseObj(_)))
@@ -554,14 +660,23 @@ object ExSeq extends ProductReader[ExSeq[_]] {
     protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
       val inEx = in.expand[T]
       import ctx.targets
-      new SelectFirstExpanded[T, A](inEx, tx)
+      new SelectFirstExpanded[T, A](inEx).connect()
     }
   }
 
   private final class TakeWhileExpanded[T <: Txn[T], A](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                        fun: Ex[Boolean], tx0: T)
+                                                        fun: Ex[Boolean])
                                                        (implicit targets: ITargets[T], ctx: Context[T])
-    extends ExpandedMapSeqIn[T, A, Boolean, Seq[A]](in, it, fun, tx0) {
+    extends ExpandedMapSeqIn[T, A, Boolean, Seq[A]](in, it, fun) {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in  .write(out)
+      it  .write(out)
+      ??? // fun .write(out)
+    }
 
     override def toString: String = s"$in.takeWhile($fun)"
 
@@ -605,7 +720,7 @@ object ExSeq extends ProductReader[ExSeq[_]] {
       val inEx = in.expand[T]
       val itEx = it.expand[T]
       import ctx.targets
-      new TakeWhileExpanded[T, A](inEx, itEx, p, tx)
+      new TakeWhileExpanded[T, A](inEx, itEx, p).connect()
     }
   }
 

@@ -13,6 +13,7 @@
 
 package de.sciss.lucre.exnew.graph
 
+import de.sciss.lucre.Txn.peer
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.graph.impl.{StmObjAttrMapCellView, StmObjCtxCellView}
 import de.sciss.lucre.exnew.impl.CellViewImpl.CatVarImpl
@@ -20,6 +21,7 @@ import de.sciss.lucre.exnew.impl.IChangeGeneratorEvent
 import de.sciss.lucre.exnew.{Arrow, CellView, Context, IChangeEvent, IExpr, IPull, ITargets}
 import de.sciss.lucre.{Adjunct, Disposable, Form, ProductWithAdjuncts, Txn, Obj => LObj}
 import de.sciss.model.Change
+import de.sciss.serial.DataOutput
 
 import scala.annotation.tailrec
 import scala.concurrent.stm.Ref
@@ -259,22 +261,32 @@ object Attr extends ProductReader[Attr[_]] {
         val defaultEx: Repr[T] = default.expand[T]
         import ctx.targets
         val attrView = resolveNested(key)
-        new WithDefault.Expanded[T, A](key, attrView, defaultEx, tx)
+        new WithDefault.Expanded[T, A](key, attrView, defaultEx).connect()
       }
 
       override def adjuncts: scala.List[Adjunct] = bridge :: Nil
     }
 
-    private[lucre] final class Expanded[T <: Txn[T], A](key: String, attrView: CellView[T, Option[A]], default: IExpr[T, A],
-                                                        tx0: T)
+    private[lucre] final class Expanded[T <: Txn[T], A](key: String, attrView: CellView[T, Option[A]], default: IExpr[T, A])
                                                        (implicit protected val targets: ITargets[T])
       extends IExpr[T, A] with IChangeGeneratorEvent[T, A] {
 
+      override protected def typeId: Int = ???
+
+      override protected def writeData(out: DataOutput): Unit = {
+        out.writeByte(0)  // serialization version
+        out.writeUTF(key)
+        ??? // attrView.write(out)
+        default.write(out)
+      }
+
       override def toString: String = s"Attr.WithDefault($key, $default)"
 
-      private[this] val ref = Ref(attrView()(tx0))
+      private[this] val ref = Ref(Option.empty[A]) // (attrView()(tx0))
 
-      private[this] val obsAttr = attrView.react { implicit tx => now =>
+      private[this] val obsAttr = Ref(Disposable.empty[T])
+
+      private def mkObs()(implicit tx: T): Disposable[T] = attrView.react { implicit tx => now =>
         val before  = ref.swap(now)(tx.peer)
         if (before != now) {
           val before1   = before.getOrElse(default.value)
@@ -282,9 +294,14 @@ object Attr extends ProductReader[Attr[_]] {
           val ch        = Change(before1, now1)
           if (ch.isSignificant) fire(ch)
         }
-      } (tx0)
+      }
 
-      default.changed.--->(this)(tx0)
+      def connect()(implicit tx: T): this.type = {
+        ref() = attrView()
+        obsAttr() = mkObs()
+        default.changed.--->(this)
+        this
+      }
 
       def value(implicit tx: T): A = {
         val opt = attrView()
@@ -304,7 +321,7 @@ object Attr extends ProductReader[Attr[_]] {
 
       def dispose()(implicit tx: T): Unit = {
         default.changed -/-> this
-        obsAttr.dispose()
+        obsAttr.swap(Disposable.empty).dispose()
       }
 
       def changed: IChangeEvent[T, A] = this
@@ -321,22 +338,36 @@ object Attr extends ProductReader[Attr[_]] {
 //    def transform(f: Ex[A] => Ex[A]): Act = set(f(self))
   }
 
-  private[lucre] final class Expanded[T <: Txn[T], A](key: String, attrView: CellView[T, Option[A]], tx0: T)
+  private[lucre] final class Expanded[T <: Txn[T], A](key: String, attrView: CellView[T, Option[A]])
                                                      (implicit protected val targets: ITargets[T])
     extends IExpr[T, Option[A]] with IChangeGeneratorEvent[T, Option[A]] {
 
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      out.writeUTF(key)
+      ??? // attrView.write(out)
+    }
+
     override def toString: String = s"Attr($key)"
 
-    // println("Attr.Expanded - created")
+    private[this] val ref = Ref(Option.empty[A]) // (value(tx0))
 
-    private[this] val ref = Ref(value(tx0))
+    private[this] val obsAttr = Ref(Disposable.empty[T])
 
-    private[this] val obsAttr = attrView.react { implicit tx => now =>
+    private def mkObs()(implicit tx: T): Disposable[T] = attrView.react { implicit tx => now =>
       val before = ref.swap(now)(tx.peer)
       val ch = Change(before, now)
       // println(s"Attr.Expanded change $ch")
       if (ch.isSignificant) fire(ch)
-    } (tx0)
+    }
+
+    def connect()(implicit tx: T): this.type = {
+      ref() = value
+      obsAttr() = mkObs()
+      this
+    }
 
     def value(implicit tx: T): Option[A] = attrView()
 
@@ -347,7 +378,7 @@ object Attr extends ProductReader[Attr[_]] {
 
     def dispose()(implicit tx: T): Unit = {
       // println("Attr.Expanded - dispose")
-      obsAttr.dispose()
+      obsAttr.swap(Disposable.empty).dispose()
     }
   }
 
@@ -371,7 +402,7 @@ final case class Attr[A](key: String)(implicit val bridge: Obj.Bridge[A])
   protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
     import ctx.targets
     val attrView = Attr.resolveNested(key)
-    new Attr.Expanded[T, A](key, attrView, tx)
+    new Attr.Expanded[T, A](key, attrView).connect()
   }
 
   override def adjuncts: scala.List[Adjunct] = bridge :: Nil

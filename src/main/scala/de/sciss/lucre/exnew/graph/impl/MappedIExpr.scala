@@ -17,11 +17,14 @@ import de.sciss.lucre.Exec
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
 import de.sciss.lucre.exnew.{IChangeEvent, IExpr, IPull, ITargets}
 
-abstract class MappedIExpr[T <: Exec[T], A1, A](in: IExpr[T, A1], tx0: T)
+abstract class MappedIExpr[T <: Exec[T], A1, A](in: IExpr[T, A1])
                                                (implicit protected val targets: ITargets[T])
   extends IExpr[T, A] with IChangeEventImpl[T, A] {
 
-  in.changed.--->(this)(tx0)
+  def connect()(implicit tx: T): this.type = {
+    in.changed.--->(this)
+    this
+  }
 
   protected def mapValue(inValue: A1)(implicit tx: T): A
 

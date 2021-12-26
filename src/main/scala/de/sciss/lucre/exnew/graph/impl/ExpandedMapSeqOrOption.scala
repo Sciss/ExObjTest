@@ -18,12 +18,13 @@ import de.sciss.lucre.exnew.{Context, IChangeEvent, IExpr, IPull, IPush, ITarget
 import de.sciss.lucre.exnew.graph.{Ex, It}
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
 import de.sciss.lucre.{Caching, Disposable, Txn}
+import de.sciss.serial.DataOutput
 
 import scala.collection.mutable
 import scala.concurrent.stm.Ref
 
 abstract class ExpandedMapSeqOrOption[T <: Txn[T], A, In[_], P, Out](in: IExpr[T, In[A]], it: It.Expanded[T, A],
-                                                                     /* closure: Graph, */ fun: Ex[P], tx0: T)
+                                                                     /* closure: Graph, */ fun: Ex[P])
                                                                     (implicit protected val targets: ITargets[T], ctx: Context[T])
   extends IExpr[T, Out] with IChangeEventImpl[T, Out] with Caching {
 
@@ -47,14 +48,13 @@ abstract class ExpandedMapSeqOrOption[T <: Txn[T], A, In[_], P, Out](in: IExpr[T
 
   private val ref = Ref.make[Tuples]()
 
-  private def init()(implicit tx: T): Unit = {
+  def connect()(implicit tx: T): this.type = {
     in .changed.--->(this)
     val inV   = in.value
     val refV  = mkRef(inV)
     ref()     = refV
+    this
   }
-
-  init()(tx0)
 
   private def disposeRef(refV: In[(IExpr[T, P], Disposable[T])])(implicit tx: T): Unit =
     foreach(refV) { case (f, d) =>
@@ -105,9 +105,9 @@ abstract class ExpandedMapSeqOrOption[T <: Txn[T], A, In[_], P, Out](in: IExpr[T
 // sequence input
 
 abstract class ExpandedMapSeqIn[T <: Txn[T], A, P, Out](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                        /* closure: Graph, */ fun: Ex[P], tx0: T)
+                                                        /* closure: Graph, */ fun: Ex[P])
                                                        (implicit targets: ITargets[T], ctx: Context[T])
-  extends ExpandedMapSeqOrOption[T, A, Seq, P, Out](in, it, fun, tx0) {
+  extends ExpandedMapSeqOrOption[T, A, Seq, P, Out](in, it, fun) {
 
   // ---- impl ----
 
@@ -121,9 +121,9 @@ abstract class ExpandedMapSeqIn[T <: Txn[T], A, P, Out](in: IExpr[T, Seq[A]], it
 }
 
 abstract class ExpandedMapSeqLike[T <: Txn[T], A, P, B](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                        /* closure: Graph, */ fun: Ex[P], tx0: T)
+                                                        /* closure: Graph, */ fun: Ex[P])
                                                        (implicit targets: ITargets[T], ctx: Context[T])
-  extends ExpandedMapSeqIn[T, A, P, Seq[B]](in, it, fun, tx0) {
+  extends ExpandedMapSeqIn[T, A, P, Seq[B]](in, it, fun) {
 
   // ---- abstract: out ----
 
@@ -156,9 +156,18 @@ abstract class ExpandedMapSeqLike[T <: Txn[T], A, P, B](in: IExpr[T, Seq[A]], it
 }
 
 final class ExpandedMapSeq[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                              /* closure: Graph, */ fun: Ex[B], tx0: T)
+                                              /* closure: Graph, */ fun: Ex[B])
                                              (implicit targets: ITargets[T], ctx: Context[T])
-  extends ExpandedMapSeqLike[T, A, B, B](in, it, fun, tx0) {
+  extends ExpandedMapSeqLike[T, A, B, B](in, it, fun) {
+
+  override protected def typeId: Int = ???
+
+  override protected def writeData(out: DataOutput): Unit = {
+    out.writeByte(0)  // serialization version
+    in  .write(out)
+    it  .write(out)
+    ??? // fun .write(out)
+  }
 
   override def toString: String = s"$in.map($fun)"
 
@@ -166,9 +175,18 @@ final class ExpandedMapSeq[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.Expan
 }
 
 final class ExpandedFlatMapSeq[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                  /* closure: Graph, */ fun: Ex[Seq[B]], tx0: T)
+                                                  /* closure: Graph, */ fun: Ex[Seq[B]])
                                                  (implicit targets: ITargets[T], ctx: Context[T])
-  extends ExpandedMapSeqLike[T, A, Seq[B], B](in, it, fun, tx0) {
+  extends ExpandedMapSeqLike[T, A, Seq[B], B](in, it, fun) {
+
+  override protected def typeId: Int = ???
+
+  override protected def writeData(out: DataOutput): Unit = {
+    out.writeByte(0)  // serialization version
+    in  .write(out)
+    it  .write(out)
+    ??? // fun .write(out)
+  }
 
   override def toString: String = s"$in.flatMap($fun)"
 
@@ -177,9 +195,18 @@ final class ExpandedFlatMapSeq[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.E
 }
 
 final class ExpandedFlatMapSeqOption[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
-                                                        /* closure: Graph, */ fun: Ex[Option[B]], tx0: T)
+                                                        /* closure: Graph, */ fun: Ex[Option[B]])
                                                        (implicit targets: ITargets[T], ctx: Context[T])
-  extends ExpandedMapSeqLike[T, A, Option[B], B](in, it, fun, tx0) {
+  extends ExpandedMapSeqLike[T, A, Option[B], B](in, it, fun) {
+
+  override protected def typeId: Int = ???
+
+  override protected def writeData(out: DataOutput): Unit = {
+    out.writeByte(0)  // serialization version
+    in  .write(out)
+    it  .write(out)
+    ??? // fun .write(out)
+  }
 
   override def toString: String = s"$in.flatMap($fun)"
 
@@ -192,9 +219,9 @@ final class ExpandedFlatMapSeqOption[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it
 // option input
 
 abstract class ExpandedMapOptionLike[T <: Txn[T], A, P, B](in: IExpr[T, Option[A]], it: It.Expanded[T, A],
-                                                           /* closure: Graph, */ fun: Ex[P], tx0: T)
+                                                           /* closure: Graph, */ fun: Ex[P])
                                                           (implicit targets: ITargets[T], ctx: Context[T])
-  extends ExpandedMapSeqOrOption[T, A, Option, P, Option[B]](in, it, fun, tx0) {
+  extends ExpandedMapSeqOrOption[T, A, Option, P, Option[B]](in, it, fun) {
 
   // ---- impl ----
 
@@ -210,9 +237,18 @@ abstract class ExpandedMapOptionLike[T <: Txn[T], A, P, B](in: IExpr[T, Option[A
 }
 
 final class ExpandedMapOption[T <: Txn[T], A, B](in: IExpr[T, Option[A]], it: It.Expanded[T, A],
-                                                 fun: Ex[B], tx0: T)
+                                                 fun: Ex[B])
                                                 (implicit targets: ITargets[T], ctx: Context[T])
-  extends ExpandedMapOptionLike[T, A, B, B](in, it, fun, tx0) {
+  extends ExpandedMapOptionLike[T, A, B, B](in, it, fun) {
+
+  override protected def typeId: Int = ???
+
+  override protected def writeData(out: DataOutput): Unit = {
+    out.writeByte(0)  // serialization version
+    in  .write(out)
+    it  .write(out)
+    ??? // fun .write(out)
+  }
 
   override def toString: String = s"$in.map($fun)"
 
@@ -227,9 +263,18 @@ final class ExpandedMapOption[T <: Txn[T], A, B](in: IExpr[T, Option[A]], it: It
 }
 
 final class ExpandedFlatMapOption[T <: Txn[T], A, B](in: IExpr[T, Option[A]], it: It.Expanded[T, A],
-                                                     fun: Ex[Option[B]], tx0: T)
+                                                     fun: Ex[Option[B]])
                                                     (implicit targets: ITargets[T], ctx: Context[T])
-  extends ExpandedMapOptionLike[T, A, Option[B], B](in, it, fun, tx0) {
+  extends ExpandedMapOptionLike[T, A, Option[B], B](in, it, fun) {
+
+  override protected def typeId: Int = ???
+
+  override protected def writeData(out: DataOutput): Unit = {
+    out.writeByte(0)  // serialization version
+    in  .write(out)
+    it  .write(out)
+    ??? // fun .write(out)
+  }
 
   override def toString: String = s"$in.flatMap($fun)"
 

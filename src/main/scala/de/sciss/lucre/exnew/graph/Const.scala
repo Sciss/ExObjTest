@@ -16,10 +16,15 @@ package graph
 
 import de.sciss.lucre.exnew.impl.IDummyEvent
 import de.sciss.lucre.{Exec, Txn}
+import de.sciss.serial.DataOutput
 
 object Const {
   private[sciss] final class Expanded[T <: Exec[T], A](peer: A)
     extends IExpr[T, A] {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = ???
 
     override def toString: String = peer.toString
 

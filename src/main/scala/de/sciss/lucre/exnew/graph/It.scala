@@ -19,6 +19,7 @@ import de.sciss.lucre.exnew.{Context, IChangeEvent, IExpr, IPull, ITargets, grap
 import de.sciss.lucre.Txn
 import de.sciss.lucre.exnew.impl.IChangeGeneratorEvent
 import de.sciss.model.Change
+import de.sciss.serial.DataOutput
 
 import scala.concurrent.stm.Ref
 
@@ -31,6 +32,10 @@ object It extends ProductReader[It[_]] {
 
   private final class ExpandedImpl[T <: Txn[T], A](val ref: AnyRef)(implicit protected val targets: ITargets[T])
     extends Expanded[T, A] with IChangeGeneratorEvent[T, A] {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = ???
 
     private[this] val valueRef = Ref.make[A]()
 

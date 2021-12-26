@@ -15,10 +15,22 @@ package de.sciss.lucre.exnew
 
 import de.sciss.lucre
 import de.sciss.lucre.{Disposable, Exec, ExprLike}
+import de.sciss.serial.{DataOutput, Writable}
 
 object IExpr {
   trait Var[T <: Exec[T], A] extends IExpr[T, A] with lucre.Ref[T, IExpr[T, A]]
 }
-trait IExpr[T <: Exec[T], +A] extends ExprLike[T, A] with IChangePublisher[T, A] with Disposable[T] {
+trait IExpr[T <: Exec[T], +A] extends ExprLike[T, A] with IChangePublisher[T, A] with Disposable[T] with Writable {
   def value(implicit tx: T): A
+
+  protected def typeId: Int
+
+  protected def writeData(out: DataOutput): Unit
+
+  // ---- impl ----
+
+  final def write(out: DataOutput): Unit = {
+    out.writeInt(typeId)
+    writeData(out)
+  }
 }

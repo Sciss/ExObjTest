@@ -23,6 +23,7 @@ import de.sciss.lucre.exnew.graph.impl.MappedIExpr
 import de.sciss.lucre.exnew.impl.IEventImpl
 import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts, Txn}
 import de.sciss.model.Change
+import de.sciss.serial.DataOutput
 import de.sciss.span.{Span => _Span, SpanLike => _SpanLike}
 
 object UnaryOp extends ProductReader[UnaryOp[_, _]] {
@@ -1239,9 +1240,17 @@ object UnaryOp extends ProductReader[UnaryOp[_, _]] {
 
   // ---- Impl ----
 
-  private[lucre] final class Expanded[T <: Exec[T], A1, A](op: Op[A1, A], a: IExpr[T, A1], tx0: T)
+  private[lucre] final class Expanded[T <: Exec[T], A1, A](op: Op[A1, A], a: IExpr[T, A1])
                                                           (implicit targets: ITargets[T])
-    extends MappedIExpr[T, A1, A](a, tx0) with IEventImpl[T, Change[A]] {
+    extends MappedIExpr[T, A1, A](a) with IEventImpl[T, Change[A]] {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      ??? // op.write(out)
+      a.write(out)
+    }
 
     override def toString: String = s"UnaryOp($op, $a)"
 
@@ -1270,6 +1279,6 @@ final case class UnaryOp[A1, A](op: Op[A1, A], a: Ex[A1])
   protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
     import ctx.targets
     val ax = a.expand[T]
-    new UnaryOp.Expanded[T, A1, A](op, ax, tx)
+    new UnaryOp.Expanded[T, A1, A](op, ax).connect()
   }
 }

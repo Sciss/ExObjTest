@@ -20,19 +20,31 @@ import de.sciss.lucre.exnew.graph.Obj.Bridge
 import de.sciss.lucre.exnew.impl.IChangeGeneratorEvent
 import de.sciss.lucre.{Caching, Disposable, Txn}
 import de.sciss.model.Change
+import de.sciss.serial.DataOutput
 
 import scala.concurrent.stm.Ref
 
-final class ExpandedObjAttr[T <: Txn[T], A](obj: IExpr[T, Obj], key: String, tx0: T)
+final class ExpandedObjAttr[T <: Txn[T], A](obj: IExpr[T, Obj], key: String)
                                            (implicit protected val targets: ITargets[T], bridge: Bridge[A])
   extends IExpr[T, Option[A]] with IChangeGeneratorEvent[T, Option[A]] with Caching {
+
+  override protected def typeId: Int = ???
+
+  override protected def writeData(out: DataOutput): Unit = {
+    out.writeByte(0)  // serialization version
+    obj.write(out)
+    out.writeUTF(key)
+    bridge.write(out)
+  }
 
   private[this] val valueRef  = Ref.make[Option[A]]()
   private[this] val obs       = Ref[Disposable[T]](Disposable.empty)
 
-  // ---- init ----
-  obj.changed.--->(this)(tx0)
-  setObj(obj.value(tx0), isInit = true)(tx0)
+  def connect()(implicit tx: T): this.type = {
+    obj.changed.--->(this)
+    setObj(obj.value, isInit = true)
+    this
+  }
 
   private def updateFromObj(now: Option[A])(implicit tx: T): Unit = {
     val before = valueRef.swap(now)

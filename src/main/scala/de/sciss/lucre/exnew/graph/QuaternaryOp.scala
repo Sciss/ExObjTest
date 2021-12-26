@@ -17,6 +17,7 @@ package graph
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
 import de.sciss.lucre.{Adjunct, Exec, Txn}
+import de.sciss.serial.DataOutput
 
 object QuaternaryOp extends ProductReader[QuaternaryOp[_, _, _, _, _]] {
   abstract class Op[A, B, C, D, E] extends Product {
@@ -63,15 +64,28 @@ object QuaternaryOp extends ProductReader[QuaternaryOp[_, _, _, _, _]] {
 
   private[lucre] final class Expanded[T <: Exec[T], A1, A2, A3, A4, A](op: QuaternaryOp.Op[A1, A2, A3, A4, A],
                                                                        a: IExpr[T, A1], b: IExpr[T, A2],
-                                                                       c: IExpr[T, A3], d: IExpr[T, A4],
-                                                                       tx0: T)
+                                                                       c: IExpr[T, A3], d: IExpr[T, A4])
                                                                       (implicit protected val targets: ITargets[T])
     extends IExpr[T, A] with IChangeEventImpl[T, A] {
 
-    a.changed.--->(this)(tx0)
-    b.changed.--->(this)(tx0)
-    c.changed.--->(this)(tx0)
-    d.changed.--->(this)(tx0)
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      ??? // op.write(out)
+      a.write(out)
+      b.write(out)
+      c.write(out)
+      d.write(out)
+    }
+
+    def connect()(implicit tx: T): this.type = {
+      a.changed.--->(this)
+      b.changed.--->(this)
+      c.changed.--->(this)
+      d.changed.--->(this)
+      this
+    }
 
     override def toString: String = s"QuaternaryOp($op, $a, $b, $c, $d)"
 
@@ -129,6 +143,6 @@ final case class QuaternaryOp[A1, A2, A3, A4, A](op: QuaternaryOp.Op[A1, A2, A3,
     val bx = b.expand[T]
     val cx = c.expand[T]
     val dx = d.expand[T]
-    new QuaternaryOp.Expanded[T, A1, A2, A3, A4, A](op, ax, bx, cx, dx, tx)
+    new QuaternaryOp.Expanded[T, A1, A2, A3, A4, A](op, ax, bx, cx, dx).connect()
   }
 }

@@ -22,7 +22,7 @@ import de.sciss.lucre.exnew.impl.{ExObjBridgeImpl, ExSeqObjBridgeImpl}
 import de.sciss.lucre.exnew.{CellView, Context, IExpr, ITargets}
 import de.sciss.lucre.impl.IChangeGeneratorEvent
 import de.sciss.lucre.{Adjunct, BooleanObj, Caching, DoubleObj, DoubleVector, IntObj, IntVector, LongObj, ProductWithAdjuncts, SpanLikeObj, SpanObj, StringObj, Sys, Txn, Obj => LObj, Source => LSource}
-import de.sciss.serial.{DataInput, TFormat}
+import de.sciss.serial.{DataInput, DataOutput, TFormat}
 import de.sciss.span.{Span => _Span, SpanLike => _SpanLike}
 
 import scala.concurrent.stm.Ref
@@ -201,7 +201,7 @@ object Obj {
 
     protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
       import ctx.targets
-      new ExpandedObjAttr(obj.expand[T], key, tx)
+      new ExpandedObjAttr(obj.expand[T], key).connect()
     }
 
 // EEE
@@ -217,9 +217,17 @@ object Obj {
 
     // XXX TODO --- we should use cell-views instead, because this way we won't notice
     // changes to the value representation (e.g. a `StringObj.Var` contents change)
-    private final class Expanded[T <: Txn[T], A](in: IExpr[T, Obj], tx0: T)
+    private final class Expanded[T <: Txn[T], A](in: IExpr[T, Obj])
                                                 (implicit targets: ITargets[T], bridge: Obj.Bridge[A])
-      extends MappedIExpr[T, Obj, Option[A]](in, tx0) {
+      extends MappedIExpr[T, Obj, Option[A]](in) {
+
+      override protected def typeId: Int = ???
+
+      override protected def writeData(out: DataOutput): Unit = {
+        out.writeByte(0)  // serialization version
+        in    .write(out)
+        bridge.write(out)
+      }
 
       protected def mapValue(inValue: Obj)(implicit tx: T): Option[A] =
         inValue.peer[T].flatMap(bridge.tryParseObj(_))
@@ -238,7 +246,7 @@ object Obj {
 
       protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
         import ctx.targets
-        new Expanded[T, A](obj.expand[T], tx)
+        new Expanded[T, A](obj.expand[T]).connect()
       }
     }
 

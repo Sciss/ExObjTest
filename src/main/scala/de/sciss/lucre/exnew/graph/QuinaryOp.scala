@@ -18,6 +18,7 @@ import de.sciss.lucre.Adjunct.{NumDouble, NumFrac, Widen2}
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
 import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts, Txn}
+import de.sciss.serial.DataOutput
 
 object QuinaryOp extends ProductReader[QuinaryOp[_, _, _, _, _, _]] {
   abstract class Op[A, B, C, D, E, F] extends Product {
@@ -161,16 +162,30 @@ object QuinaryOp extends ProductReader[QuinaryOp[_, _, _, _, _, _]] {
   private[lucre] final class Expanded[T <: Exec[T], A1, A2, A3, A4, A5, A](op: QuinaryOp.Op[A1, A2, A3, A4, A5, A],
                                                                            a: IExpr[T, A1], b: IExpr[T, A2],
                                                                            c: IExpr[T, A3], d: IExpr[T, A4],
-                                                                           e: IExpr[T, A5],
-                                                                           tx0: T)
+                                                                           e: IExpr[T, A5])
                                                                           (implicit protected val targets: ITargets[T])
     extends IExpr[T, A] with IChangeEventImpl[T, A] {
 
-    a.changed.--->(this)(tx0)
-    b.changed.--->(this)(tx0)
-    c.changed.--->(this)(tx0)
-    d.changed.--->(this)(tx0)
-    e.changed.--->(this)(tx0)
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      ??? // op.write(out)
+      a.write(out)
+      b.write(out)
+      c.write(out)
+      d.write(out)
+      e.write(out)
+    }
+
+    def connect()(implicit tx: T): this.type = {
+      a.changed.--->(this)
+      b.changed.--->(this)
+      c.changed.--->(this)
+      d.changed.--->(this)
+      e.changed.--->(this)
+      this
+    }
 
     override def toString: String = s"QuinaryOp($op, $a, $b, $c, $d, $e)"
 
@@ -233,6 +248,6 @@ final case class QuinaryOp[A1, A2, A3, A4, A5, A](op: QuinaryOp.Op[A1, A2, A3, A
     val cx = c.expand[T]
     val dx = d.expand[T]
     val ex = e.expand[T]
-    new QuinaryOp.Expanded[T, A1, A2, A3, A4, A5, A](op, ax, bx, cx, dx, ex, tx)
+    new QuinaryOp.Expanded[T, A1, A2, A3, A4, A5, A](op, ax, bx, cx, dx, ex).connect()
   }
 }

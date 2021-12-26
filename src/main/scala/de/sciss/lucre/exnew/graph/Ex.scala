@@ -116,7 +116,7 @@ object Ex /*extends ExPlatform*/ {
       val inEx  = in.expand[T]
       val itEx  = it.expand[T]
       import ctx.targets
-      new ExpandedMapOption[T, A, B](inEx, itEx, fun, tx)
+      new ExpandedMapOption[T, A, B](inEx, itEx, fun).connect()
     }
   }
 
@@ -140,7 +140,7 @@ object Ex /*extends ExPlatform*/ {
       val inEx  = in.expand[T]
       val itEx  = it.expand[T]
       import ctx.targets
-      new ExpandedMapSeq[T, A, B](inEx, itEx, fun, tx)
+      new ExpandedMapSeq[T, A, B](inEx, itEx, fun).connect()
     }
   }
 
@@ -164,7 +164,7 @@ object Ex /*extends ExPlatform*/ {
       val inEx = in.expand[T]
       val itEx = it.expand[T]
       import ctx.targets
-      new ExpandedFlatMapOption[T, A, B](inEx, itEx, fun, tx)
+      new ExpandedFlatMapOption[T, A, B](inEx, itEx, fun).connect()
     }
   }
 
@@ -188,7 +188,7 @@ object Ex /*extends ExPlatform*/ {
       val inEx  = in  .expand[T]
       val itEx  = it  .expand[T]
       import ctx.targets
-      new ExpandedFlatMapSeq[T, A, B](inEx, itEx, fun, tx)
+      new ExpandedFlatMapSeq[T, A, B](inEx, itEx, fun).connect()
     }
   }
 
@@ -212,7 +212,7 @@ object Ex /*extends ExPlatform*/ {
       val inEx  = in.expand[T]
       val itEx  = it.expand[T]
       import ctx.targets
-      new ExpandedFlatMapSeqOption[T, A, B](inEx, itEx, fun, tx)
+      new ExpandedFlatMapSeqOption[T, A, B](inEx, itEx, fun).connect()
     }
   }
 

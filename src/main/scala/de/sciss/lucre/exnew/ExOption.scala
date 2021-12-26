@@ -4,13 +4,22 @@ import de.sciss.lucre.{Adjunct, ProductWithAdjuncts, Txn}
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.graph.{Ex, Obj}
 import de.sciss.lucre.exnew.graph.impl.MappedIExpr
+import de.sciss.serial.DataOutput
 
 object ExOption {
   // XXX TODO --- we should use cell-views instead, because this way we won't notice
   // changes to the value representation (e.g. a `StringObj.Var` contents change)
-  private final class SelectExpanded[T <: Txn[T], A](in: IExpr[T, Option[Obj]], tx0: T)
+  private final class SelectExpanded[T <: Txn[T], A](in: IExpr[T, Option[Obj]])
                                                     (implicit targets: ITargets[T], bridge: Obj.Bridge[A])
-    extends MappedIExpr[T, Option[Obj], Option[A]](in, tx0) {
+    extends MappedIExpr[T, Option[Obj], Option[A]](in) {
+
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in    .write(out)
+      bridge.write(out)
+    }
 
     protected def mapValue(inValue: Option[Obj])(implicit tx: T): Option[A] =
       inValue.flatMap(_.peer[T].flatMap(bridge.tryParseObj(_)))
@@ -36,7 +45,7 @@ object ExOption {
     protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
       val inEx = in.expand[T]
       import ctx.targets
-      new SelectExpanded[T, A](inEx, tx)
+      new SelectExpanded[T, A](inEx).connect()
     }
   }
 }

@@ -17,17 +17,30 @@ import de.sciss.lucre.exnew.{Context, IChangeEvent, IExpr, IPull, ITargets}
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.Txn
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
+import de.sciss.serial.DataOutput
 
 import java.util.Locale
 
 object StringFormat extends ProductReader[StringFormat] {
   // XXX TODO: should listen to `in`
-  private final class Expanded[T <: Txn[T]](in: IExpr[T, String], args: Seq[IExpr[T, Any]], tx0: T)
+  private final class Expanded[T <: Txn[T]](in: IExpr[T, String], args: Seq[IExpr[T, Any]])
                                            (implicit protected val targets: ITargets[T])
     extends IExpr[T, String] with IChangeEventImpl[T, String] {
 
-    args.foreach { a =>
-      a.changed.--->(this)(tx0)
+    override protected def typeId: Int = ???
+
+    override protected def writeData(out: DataOutput): Unit = {
+      out.writeByte(0)  // serialization version
+      in.write(out)
+      out.writeInt(args.size)
+      args.foreach(_.write(out))
+    }
+
+    def connect()(implicit tx: T): this.type = {
+      args.foreach { a =>
+        a.changed.--->(this)
+      }
+      this
     }
 
     def value(implicit tx: T): String = {
@@ -334,6 +347,6 @@ final case class StringFormat(in: Ex[String], args: Seq[Ex[Any]]) extends Ex[Str
 
   protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
     import ctx.targets
-    new StringFormat.Expanded(in.expand[T], args.map(_.expand[T]), tx)
+    new StringFormat.Expanded(in.expand[T], args.map(_.expand[T])).connect()
   }
 }
