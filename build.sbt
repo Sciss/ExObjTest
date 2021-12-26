@@ -29,7 +29,7 @@ lazy val commonSettings = Seq(
   Test / testOptions += Tests.Argument("-oDF"),   // ScalaTest: durations and full stack traces
   Test / parallelExecution := false,
   licenses := Seq(agpl),
-) ++ publishSettings
+)
 
 lazy val agpl = "AGPL v3+" -> url("http://www.gnu.org/licenses/agpl-3.0.txt")
 
@@ -38,7 +38,8 @@ lazy val root = project.withId(baseNameL).in(file("."))
   .settings(
     name := baseName,
     libraryDependencies ++= Seq(
-      "de.sciss" %%% "serial" % deps.lucre,
+      "de.sciss" %% "lucre-core" % deps.lucre,
+      "de.sciss" %% "lucre-expr" % deps.lucre,
     ),
   )
 
