@@ -47,7 +47,7 @@ object ExElem {
   private val mapRead = mutable.Map[String, ProductReader[Product]](
   )
 
-  final class RefMapOut(out0: DataOutput) extends serial.RefMapOut(out0) {
+  class RefMapOut(out0: DataOutput) extends serial.RefMapOut(out0) {
     override protected def isDefaultPackage(pck: String): Boolean =
       pck == DefaultPackage
 
@@ -86,7 +86,7 @@ object ExElem {
       }
   }
 
-  final class RefMapIn(in0: DataInput) extends serial.RefMapIn[RefMapIn](in0) {
+  class RefMapIn(in0: DataInput) extends serial.RefMapIn[RefMapIn](in0) {
     type Const  = graph.Const[_]
     type U      = Artifact.Value
 
