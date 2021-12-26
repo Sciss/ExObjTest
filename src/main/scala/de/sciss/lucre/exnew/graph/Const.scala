@@ -14,8 +14,8 @@
 package de.sciss.lucre.exnew
 package graph
 
-import de.sciss.lucre.impl.IDummyEvent
-import de.sciss.lucre.{Exec, IChangeEvent, IExpr, Txn}
+import de.sciss.lucre.exnew.impl.IDummyEvent
+import de.sciss.lucre.{Exec, Txn}
 
 object Const {
   private[sciss] final class Expanded[T <: Exec[T], A](peer: A)

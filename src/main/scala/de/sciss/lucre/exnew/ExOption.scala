@@ -1,6 +1,6 @@
 package de.sciss.lucre.exnew
 
-import de.sciss.lucre.{Adjunct, IExpr, ITargets, ProductWithAdjuncts, Txn}
+import de.sciss.lucre.{Adjunct, ProductWithAdjuncts, Txn}
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.graph.{Ex, Obj}
 import de.sciss.lucre.exnew.graph.impl.MappedIExpr

@@ -14,10 +14,10 @@
 package de.sciss.lucre.exnew.graph.impl
 
 import de.sciss.lucre.Txn.peer
-import de.sciss.lucre.exnew.Context
+import de.sciss.lucre.exnew.{Context, IChangeEvent, IExpr, IPull, IPush, ITargets}
 import de.sciss.lucre.exnew.graph.{Ex, It}
-import de.sciss.lucre.impl.IChangeEventImpl
-import de.sciss.lucre.{Caching, Disposable, IChangeEvent, IExpr, IPull, IPush, ITargets, Txn}
+import de.sciss.lucre.exnew.impl.IChangeEventImpl
+import de.sciss.lucre.{Caching, Disposable, Txn}
 
 import scala.collection.mutable
 import scala.concurrent.stm.Ref

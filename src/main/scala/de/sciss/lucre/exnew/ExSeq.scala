@@ -16,8 +16,8 @@ package de.sciss.lucre.exnew
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.graph.impl.{ExpandedMapSeqIn, MappedIExpr}
 import de.sciss.lucre.exnew.graph.{Ex, It, Obj}
-import de.sciss.lucre.impl.IChangeEventImpl
-import de.sciss.lucre.{Adjunct, IChangeEvent, IExpr, IPull, ITargets, ProductWithAdjuncts, Txn, expr}
+import de.sciss.lucre.exnew.impl.IChangeEventImpl
+import de.sciss.lucre.{Adjunct, ProductWithAdjuncts, Txn, expr}
 
 object ExSeq extends ProductReader[ExSeq[_]] {
   private final class Expanded[T <: Txn[T], A](elems: Seq[IExpr[T, A]])(implicit protected val targets: ITargets[T])

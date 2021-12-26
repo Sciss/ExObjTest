@@ -14,10 +14,11 @@
 package de.sciss.lucre.exnew.graph.impl
 
 import de.sciss.lucre.Txn.peer
+import de.sciss.lucre.exnew.{IChangeEvent, IExpr, IPull, IPush, ITargets}
 import de.sciss.lucre.exnew.graph.Obj
 import de.sciss.lucre.exnew.graph.Obj.Bridge
-import de.sciss.lucre.impl.IChangeGeneratorEvent
-import de.sciss.lucre.{Caching, Disposable, IChangeEvent, IExpr, IPull, IPush, ITargets, Txn}
+import de.sciss.lucre.exnew.impl.IChangeGeneratorEvent
+import de.sciss.lucre.{Caching, Disposable, Txn}
 import de.sciss.model.Change
 
 import scala.concurrent.stm.Ref

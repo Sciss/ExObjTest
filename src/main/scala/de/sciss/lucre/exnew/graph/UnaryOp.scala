@@ -20,8 +20,8 @@ import de.sciss.lucre.Adjunct.{HasDefault, Num, NumBool, NumFrac, NumInt, Scalar
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.graph.UnaryOp.Op
 import de.sciss.lucre.exnew.graph.impl.MappedIExpr
-import de.sciss.lucre.impl.IEventImpl
-import de.sciss.lucre.{Adjunct, Exec, IExpr, ITargets, ProductWithAdjuncts, Txn}
+import de.sciss.lucre.exnew.impl.IEventImpl
+import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts, Txn}
 import de.sciss.model.Change
 import de.sciss.span.{Span => _Span, SpanLike => _SpanLike}
 

@@ -16,8 +16,8 @@ package graph
 
 import de.sciss.lucre.Adjunct.{Num, Widen2}
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
-import de.sciss.lucre.impl.IChangeEventImpl
-import de.sciss.lucre.{Adjunct, Exec, IChangeEvent, IExpr, IPull, ITargets, ProductWithAdjuncts, Txn}
+import de.sciss.lucre.exnew.impl.IChangeEventImpl
+import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts, Txn}
 
 import scala.util.control.NonFatal
 

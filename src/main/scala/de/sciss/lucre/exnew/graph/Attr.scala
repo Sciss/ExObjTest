@@ -16,9 +16,9 @@ package de.sciss.lucre.exnew.graph
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.graph.impl.{StmObjAttrMapCellView, StmObjCtxCellView}
 import de.sciss.lucre.exnew.impl.CellViewImpl.CatVarImpl
-import de.sciss.lucre.exnew.{Arrow, CellView, Context}
-import de.sciss.lucre.impl.IChangeGeneratorEvent
-import de.sciss.lucre.{Adjunct, Disposable, Form, IChangeEvent, IExpr, IPull, ITargets, ProductWithAdjuncts, Txn, Obj => LObj}
+import de.sciss.lucre.exnew.impl.IChangeGeneratorEvent
+import de.sciss.lucre.exnew.{Arrow, CellView, Context, IChangeEvent, IExpr, IPull, ITargets}
+import de.sciss.lucre.{Adjunct, Disposable, Form, ProductWithAdjuncts, Txn, Obj => LObj}
 import de.sciss.model.Change
 
 import scala.annotation.tailrec

@@ -19,9 +19,9 @@ import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.graph.impl.{AbstractCtxCellView, ExpandedObjAttr, MappedIExpr, ObjCellViewVarImpl, ObjImplBase}
 import de.sciss.lucre.exnew.graph.{Attr => _Attr}
 import de.sciss.lucre.exnew.impl.{ExObjBridgeImpl, ExSeqObjBridgeImpl}
-import de.sciss.lucre.exnew.{CellView, Context}
+import de.sciss.lucre.exnew.{CellView, Context, IExpr, ITargets}
 import de.sciss.lucre.impl.IChangeGeneratorEvent
-import de.sciss.lucre.{Adjunct, BooleanObj, Caching, DoubleObj, DoubleVector, IChangeEvent, IExpr, IPush, ITargets, IntObj, IntVector, LongObj, ProductWithAdjuncts, SpanLikeObj, SpanObj, StringObj, Sys, Txn, Obj => LObj, Source => LSource}
+import de.sciss.lucre.{Adjunct, BooleanObj, Caching, DoubleObj, DoubleVector, IntObj, IntVector, LongObj, ProductWithAdjuncts, SpanLikeObj, SpanObj, StringObj, Sys, Txn, Obj => LObj, Source => LSource}
 import de.sciss.serial.{DataInput, TFormat}
 import de.sciss.span.{Span => _Span, SpanLike => _SpanLike}
 

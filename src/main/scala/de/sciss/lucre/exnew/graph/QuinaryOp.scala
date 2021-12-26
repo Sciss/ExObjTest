@@ -16,8 +16,8 @@ package graph
 
 import de.sciss.lucre.Adjunct.{NumDouble, NumFrac, Widen2}
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
-import de.sciss.lucre.impl.IChangeEventImpl
-import de.sciss.lucre.{Adjunct, Exec, IChangeEvent, IExpr, IPull, ITargets, ProductWithAdjuncts, Txn}
+import de.sciss.lucre.exnew.impl.IChangeEventImpl
+import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts, Txn}
 
 object QuinaryOp extends ProductReader[QuinaryOp[_, _, _, _, _, _]] {
   abstract class Op[A, B, C, D, E, F] extends Product {

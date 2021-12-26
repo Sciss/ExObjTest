@@ -17,8 +17,8 @@ import de.sciss.equal.Implicits._
 import de.sciss.lucre.Adjunct.{FromAny, HasDefault, Ord, Scalar, ScalarOrd}
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.graph.impl.{ExpandedFlatMapOption, ExpandedFlatMapSeq, ExpandedFlatMapSeqOption, ExpandedMapOption, ExpandedMapSeq}
-import de.sciss.lucre.exnew.{Context, ExOps, ExOptionOps, ExSeq, ExSeqOps, ExStringOps, Graph}
-import de.sciss.lucre.{Adjunct, IExpr, Txn}
+import de.sciss.lucre.exnew.{Context, ExOps, ExOptionOps, ExSeq, ExSeqOps, ExStringOps, Graph, IExpr}
+import de.sciss.lucre.{Adjunct, Txn}
 import de.sciss.lucre.{Artifact => _Artifact}
 import de.sciss.serial.DataInput
 import de.sciss.span.{Span => _Span, SpanLike => _SpanLike}

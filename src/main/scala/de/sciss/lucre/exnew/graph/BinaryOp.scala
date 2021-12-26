@@ -18,8 +18,8 @@ import java.net.{URI => _URI}
 import de.sciss.asyncfile.Ops.URIOps
 import de.sciss.lucre.Adjunct.{HasDefault, Num, NumDiv, NumDouble, NumInt, NumLogic, Ord, Widen2}
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
-import de.sciss.lucre.impl.IChangeEventImpl
-import de.sciss.lucre.{Adjunct, Exec, IChangeEvent, IExpr, IPull, ITargets, ProductWithAdjuncts, Txn}
+import de.sciss.lucre.exnew.impl.IChangeEventImpl
+import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts, Txn}
 import de.sciss.span.SpanLike
 
 object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {

@@ -16,9 +16,9 @@ package de.sciss.lucre.exnew.graph
 import de.sciss.lucre.Adjunct.{FromAny, HasDefault, NumInt}
 import de.sciss.lucre.Txn.peer
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
-import de.sciss.lucre.exnew.{Arrow, Context, graph}
-import de.sciss.lucre.impl.IChangeGeneratorEvent
-import de.sciss.lucre.{Adjunct, Disposable, IChangeEvent, IExpr, IPull, ITargets, ProductWithAdjuncts, Txn}
+import de.sciss.lucre.exnew.impl.IChangeGeneratorEvent
+import de.sciss.lucre.exnew.{Arrow, Context, IChangeEvent, IExpr, IPull, ITargets, graph}
+import de.sciss.lucre.{Adjunct, Disposable, ProductWithAdjuncts, Txn}
 import de.sciss.model.Change
 
 import scala.concurrent.stm.Ref

@@ -18,7 +18,7 @@ import de.sciss.lucre.edit.UndoManager
 import de.sciss.lucre.exnew.graph.{Attr, Ex}
 import de.sciss.lucre.exnew.impl.ContextMixin
 import de.sciss.lucre.impl.{ExprNodeImpl, ExprTypeExtension1, GeneratorEvent}
-import de.sciss.lucre.{Copy, Cursor, Disposable, Event, IExpr, IntObj, Obj, Pull, Source, Txn}
+import de.sciss.lucre.{Copy, Cursor, Disposable, Event, IntObj, Obj, Pull, Source, Txn}
 import de.sciss.model.Change
 import de.sciss.serial.{DataInput, DataOutput}
 

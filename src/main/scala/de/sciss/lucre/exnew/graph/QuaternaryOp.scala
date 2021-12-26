@@ -15,8 +15,8 @@ package de.sciss.lucre.exnew
 package graph
 
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
-import de.sciss.lucre.impl.IChangeEventImpl
-import de.sciss.lucre.{Adjunct, Exec, IChangeEvent, IExpr, IPull, ITargets, Txn}
+import de.sciss.lucre.exnew.impl.IChangeEventImpl
+import de.sciss.lucre.{Adjunct, Exec, Txn}
 
 object QuaternaryOp extends ProductReader[QuaternaryOp[_, _, _, _, _]] {
   abstract class Op[A, B, C, D, E] extends Product {

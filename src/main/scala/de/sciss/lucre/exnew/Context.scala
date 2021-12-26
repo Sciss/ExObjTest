@@ -11,9 +11,9 @@
  *  contact@sciss.de
  */
 
-package de.sciss.lucre
-package exnew
+package de.sciss.lucre.exnew
 
+import de.sciss.lucre.{AnyTxn, Cursor, Disposable, Form, MapObjLike, Obj, Observable, Source, Txn}
 import de.sciss.lucre.edit.UndoManager
 import de.sciss.lucre.exnew.graph.It
 // EEE

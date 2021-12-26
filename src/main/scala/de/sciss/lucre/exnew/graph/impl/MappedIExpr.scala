@@ -13,8 +13,9 @@
 
 package de.sciss.lucre.exnew.graph.impl
 
-import de.sciss.lucre.impl.IChangeEventImpl
-import de.sciss.lucre.{Exec, IChangeEvent, IExpr, IPull, ITargets}
+import de.sciss.lucre.Exec
+import de.sciss.lucre.exnew.impl.IChangeEventImpl
+import de.sciss.lucre.exnew.{IChangeEvent, IExpr, IPull, ITargets}
 
 abstract class MappedIExpr[T <: Exec[T], A1, A](in: IExpr[T, A1], tx0: T)
                                                (implicit protected val targets: ITargets[T])

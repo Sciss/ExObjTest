@@ -13,10 +13,10 @@
 
 package de.sciss.lucre.exnew.graph
 
-import de.sciss.lucre.exnew.Context
+import de.sciss.lucre.exnew.{Context, IChangeEvent, IExpr, IPull, ITargets}
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
-import de.sciss.lucre.impl.IChangeEventImpl
-import de.sciss.lucre.{IChangeEvent, IExpr, IPull, ITargets, Txn}
+import de.sciss.lucre.Txn
+import de.sciss.lucre.exnew.impl.IChangeEventImpl
 
 import java.util.Locale
 
