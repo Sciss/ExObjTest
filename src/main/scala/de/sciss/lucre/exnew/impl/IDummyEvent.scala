@@ -14,19 +14,19 @@
 package de.sciss.lucre.exnew
 package impl
 
-import de.sciss.lucre.{AnyExec, Disposable, Exec}
+import de.sciss.lucre.{AnyExec, AnyTxn, Disposable, Exec, Txn}
 import de.sciss.model.Change
 
 object IDummyEvent {
   /** This method is cheap. */
-  def apply[T <: Exec[T], A](): IEvent[T, A] = anyDummy.asInstanceOf[IEvent[T, A]]
+  def apply[T <: Txn[T], A](): IEvent[T, A] = anyDummy.asInstanceOf[IEvent[T, A]]
 
-  def change[T <: Exec[T], A]: IChangeEvent[T, A] = anyChangeDummy.asInstanceOf[IChangeEvent[T, A]]
+  def change[T <: Txn[T], A]: IChangeEvent[T, A] = anyChangeDummy.asInstanceOf[IChangeEvent[T, A]]
 
-  private val anyDummy        = new Impl       [AnyExec]
-  private val anyChangeDummy  = new ChangeImpl [AnyExec]
+  private val anyDummy        = new Impl       [AnyTxn]
+  private val anyChangeDummy  = new ChangeImpl [AnyTxn]
 
-  private final class Impl[T <: Exec[T]] extends IEvent[T, Any] {
+  private final class Impl[T <: Txn[T]] extends IEvent[T, Any] {
     override def toString = "event.IDummy"
 
     def --->(sink: IEvent[T, Any])(implicit tx: T): Unit = ()
@@ -37,7 +37,7 @@ object IDummyEvent {
     def react(fun: T => Any => Unit)(implicit tx: T): Disposable[T] = Disposable.empty[T]
   }
 
-  private final class ChangeImpl[T <: Exec[T]] extends IChangeEvent[T, Any] {
+  private final class ChangeImpl[T <: Txn[T]] extends IChangeEvent[T, Any] {
     override def toString = "event.IDummy"
 
     def --->(sink: IEvent[T, Any])(implicit tx: T): Unit = ()

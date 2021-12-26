@@ -159,7 +159,7 @@ object QuinaryOp extends ProductReader[QuinaryOp[_, _, _, _, _, _]] {
     def adjuncts: List[Adjunct] = w :: num :: Nil
   }
 
-  private[lucre] final class Expanded[T <: Exec[T], A1, A2, A3, A4, A5, A](op: QuinaryOp.Op[A1, A2, A3, A4, A5, A],
+  private[lucre] final class Expanded[T <: Txn[T], A1, A2, A3, A4, A5, A](op: QuinaryOp.Op[A1, A2, A3, A4, A5, A],
                                                                            a: IExpr[T, A1], b: IExpr[T, A2],
                                                                            c: IExpr[T, A3], d: IExpr[T, A4],
                                                                            e: IExpr[T, A5])

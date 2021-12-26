@@ -13,11 +13,10 @@
 
 package de.sciss.lucre.exnew
 
-import de.sciss.lucre.{Exec, Observable}
+import de.sciss.lucre.{Exec, Observable, Txn}
 
 /** In-memory (non-serializable) event. */
-trait IEvent[T <: Exec[T], +A] extends Observable[T, A] {
-  //  private[event] def slot: Int
+trait IEvent[T <: Txn[T], +A] extends Observable[T, A] {
 
   /** Connects the given selector to this event. That is, this event will
    * add the selector to its propagation targets.

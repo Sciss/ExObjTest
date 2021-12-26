@@ -105,15 +105,13 @@ object Attr extends ProductReader[Attr[_]] {
 
     } else {
       val ctxFull = bridge.contextCellView[T](key)
-      ???
-// EEE
-//      ctx.selfOption match {
-//        case Some(self) =>
-//          val objFull = bridge.cellView(self, key)
-//          ctxFull orElse objFull
-//        case None =>
-//          ctxFull
-//      }
+      ctx.selfOption match {
+        case Some(self) =>
+          val objFull = bridge.cellView(self, key)
+          ctxFull orElse objFull
+        case None =>
+          ctxFull
+      }
     }
   }
 

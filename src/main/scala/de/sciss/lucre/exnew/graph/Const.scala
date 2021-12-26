@@ -19,7 +19,7 @@ import de.sciss.lucre.{Exec, Txn}
 import de.sciss.serial.DataOutput
 
 object Const {
-  private[sciss] final class Expanded[T <: Exec[T], A](peer: A)
+  private[sciss] final class Expanded[T <: Txn[T], A](peer: A)
     extends IExpr[T, A] {
 
     override protected def typeId: Int = ???

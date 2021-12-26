@@ -1240,7 +1240,7 @@ object UnaryOp extends ProductReader[UnaryOp[_, _]] {
 
   // ---- Impl ----
 
-  private[lucre] final class Expanded[T <: Exec[T], A1, A](op: Op[A1, A], a: IExpr[T, A1])
+  private[lucre] final class Expanded[T <: Txn[T], A1, A](op: Op[A1, A], a: IExpr[T, A1])
                                                           (implicit targets: ITargets[T])
     extends MappedIExpr[T, A1, A](a) with IEventImpl[T, Change[A]] {
 

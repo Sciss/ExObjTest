@@ -14,9 +14,9 @@
 package de.sciss.lucre.exnew
 package impl
 
-import de.sciss.lucre.Exec
+import de.sciss.lucre.{Exec, Txn}
 import de.sciss.model.Change
 
-trait IChangeEventImpl[T <: Exec[T], +A] extends IEventImpl[T, Change[A]] with IChangeEvent[T, A] {
+trait IChangeEventImpl[T <: Txn[T], +A] extends IEventImpl[T, Change[A]] with IChangeEvent[T, A] {
   protected def targets: ITargets[T]
 }

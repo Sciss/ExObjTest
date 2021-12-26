@@ -62,7 +62,7 @@ object QuaternaryOp extends ProductReader[QuaternaryOp[_, _, _, _, _]] {
     def name = "SeqPatch"
   }
 
-  private[lucre] final class Expanded[T <: Exec[T], A1, A2, A3, A4, A](op: QuaternaryOp.Op[A1, A2, A3, A4, A],
+  private[lucre] final class Expanded[T <: Txn[T], A1, A2, A3, A4, A](op: QuaternaryOp.Op[A1, A2, A3, A4, A],
                                                                        a: IExpr[T, A1], b: IExpr[T, A2],
                                                                        c: IExpr[T, A3], d: IExpr[T, A4])
                                                                       (implicit protected val targets: ITargets[T])

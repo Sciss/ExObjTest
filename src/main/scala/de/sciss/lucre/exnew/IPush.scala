@@ -14,7 +14,7 @@
 package de.sciss.lucre.exnew
 
 import de.sciss.equal.Implicits._
-import de.sciss.lucre.{Caching, Exec, Observer}
+import de.sciss.lucre.{Caching, Exec, Observer, Txn}
 import de.sciss.lucre.Log.{event => logEvent}
 import de.sciss.lucre.exnew.IPull.Phase
 import de.sciss.model.Change
@@ -24,7 +24,7 @@ import scala.annotation.elidable.CONFIG
 import scala.collection.immutable.{Map => IMap}
 
 object IPush {
-  private[lucre] def apply[T <: Exec[T], A](origin: IEvent[T, A], update: A)
+  private[lucre] def apply[T <: Txn[T], A](origin: IEvent[T, A], update: A)
                                            (implicit tx: T, context: Context[T], targets: ITargets[T]): Unit = {
     val push = new Impl(origin, update)
     logEvent.debug("ipush begin")
@@ -34,9 +34,9 @@ object IPush {
     logEvent.debug("ipull end")
   }
 
-  type Parents[T <: Exec[T]] = Set[IEvent[T, Any]]
+  type Parents[T <: Txn[T]] = Set[IEvent[T, Any]]
 
-  private def NoParents[T <: Exec[T]]: Parents[T] = Set.empty[IEvent[T, Any]]
+  private def NoParents[T <: Txn[T]]: Parents[T] = Set.empty[IEvent[T, Any]]
 
   // private type Visited[S <: Sys[T]] = IMap[Event[T, Any], Parents[T]]
   private final class Reaction[T <: Exec[T], +A](update: A, observers: List[Observer[T, A]]) {
@@ -96,7 +96,7 @@ object IPush {
     }
   }
 
-  private final class Impl[T <: Exec[T]](origin: IEvent[T, Any], val update: Any)
+  private final class Impl[T <: Txn[T]](origin: IEvent[T, Any], val update: Any)
                                         (implicit tx: T, val context: Context[T], targets: ITargets[T])
     extends IPull[T] {
 
@@ -276,7 +276,7 @@ object IPush {
     override def initialValue(): IMap[Any, IPull[_]] = IMap.empty
   }
 
-  def tryPull[T <: Exec[T], A](source: IEvent[T, A])(implicit tx: T): Option[A] =
+  def tryPull[T <: Txn[T], A](source: IEvent[T, A])(implicit tx: T): Option[A] =
     currentPull.get().get(tx).flatMap { p =>
       val pc = p.asInstanceOf[IPull[T]]
       if (pc.contains(source)) pc(source) else None
@@ -291,7 +291,7 @@ object IPull {
   case object Before extends Phase { def isBefore = true  ; def isNow = false }
   case object Now    extends Phase { def isBefore = false ; def isNow = true  }
 }
-trait IPull[T <: Exec[T]] {
+trait IPull[T <: Txn[T]] {
   implicit def context: Context[T]
 
   /** Assuming that the caller is origin of the event, resolves the update of the given type. */

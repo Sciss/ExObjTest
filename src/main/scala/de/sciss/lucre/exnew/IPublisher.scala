@@ -13,8 +13,8 @@
 
 package de.sciss.lucre.exnew
 
-import de.sciss.lucre.Exec
+import de.sciss.lucre.{Exec, Txn}
 
-trait IPublisher[T <: Exec[T], +A] {
+trait IPublisher[T <: Txn[T], +A] {
   def changed: IEvent[T, A]
 }

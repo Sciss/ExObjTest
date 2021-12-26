@@ -13,10 +13,10 @@
 
 package de.sciss.lucre.exnew
 
-import de.sciss.lucre.Exec
+import de.sciss.lucre.{Exec, Txn}
 import de.sciss.model.Change
 
-trait IChangeEvent[T <: Exec[T], +A] extends IEvent[T, Change[A]] {
+trait IChangeEvent[T <: Txn[T], +A] extends IEvent[T, Change[A]] {
   private[lucre] def pullUpdate(pull: IPull[T])(implicit tx: T): Option[Change[A]] = {
     val before  = pullChange(pull)(tx, IPull.Before)
     val now     = pullChange(pull)(tx, IPull.Now   )

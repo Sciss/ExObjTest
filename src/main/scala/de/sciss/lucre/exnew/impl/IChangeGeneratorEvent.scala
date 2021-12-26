@@ -14,7 +14,7 @@
 package de.sciss.lucre.exnew
 package impl
 
-import de.sciss.lucre.Exec
+import de.sciss.lucre.{Exec, Txn}
 import de.sciss.model.Change
 
-trait IChangeGeneratorEvent[T <: Exec[T], A] extends IGeneratorEvent[T, Change[A]] with IChangeEventImpl[T, A]
+trait IChangeGeneratorEvent[T <: Txn[T], A] extends IGeneratorEvent[T, Change[A]] with IChangeEventImpl[T, A]

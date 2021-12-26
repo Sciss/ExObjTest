@@ -1316,7 +1316,7 @@ object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {
 
   // ---- Impl ----
 
-  private[lucre] final class Expanded[T <: Exec[T], A1, A2, A3, A](op: BinaryOp.Op[A1, A2, A],
+  private[lucre] final class Expanded[T <: Txn[T], A1, A2, A3, A](op: BinaryOp.Op[A1, A2, A],
                                                                    a: IExpr[T, A1], b: IExpr[T, A2])
                                                                   (implicit protected val targets: ITargets[T])
     extends IExpr[T, A] with IChangeEventImpl[T, A] {

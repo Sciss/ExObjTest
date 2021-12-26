@@ -93,7 +93,7 @@ object ITargets {
 /** Interconnection management for in-memory events.
  * A centralized instance that combines the functionality of `Targets` with `ReactionMap`.
  */
-trait ITargets[T <: Exec[T]] {
+trait ITargets[T <: Txn[T]] {
   def children(parent: IEvent[T, Any])(implicit tx: T): List[IEvent[T, Any]]
 
   /** Adds a dependant to this node target.

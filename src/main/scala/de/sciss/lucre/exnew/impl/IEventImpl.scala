@@ -14,9 +14,9 @@
 package de.sciss.lucre.exnew
 package impl
 
-import de.sciss.lucre.{Disposable, Exec}
+import de.sciss.lucre.{Disposable, Exec, Observer, Txn}
 
-trait IEventImpl[T <: Exec[T], +A] extends IEvent[T, A] {
+trait IEventImpl[T <: Txn[T], +A] extends IEvent[T, A] {
   protected def targets: ITargets[T]
 
   def --->(sink: IEvent[T, Any])(implicit tx: T): Unit =
@@ -26,5 +26,5 @@ trait IEventImpl[T <: Exec[T], +A] extends IEvent[T, A] {
     targets.remove(this, sink)
 
   def react(fun: T => A => Unit)(implicit tx: T): Disposable[T] =
-    ??? // Observer(this, fun)(tx, targets)
+    IObserver(this, fun)(tx, targets)
 }

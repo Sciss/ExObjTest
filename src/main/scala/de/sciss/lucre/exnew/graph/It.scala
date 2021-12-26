@@ -24,7 +24,7 @@ import de.sciss.serial.DataOutput
 import scala.concurrent.stm.Ref
 
 object It extends ProductReader[It[_]] {
-  trait Expanded[T <: Exec /*Txn*/[T], A] extends IExpr[T, A] {
+  trait Expanded[T <: Txn[T], A] extends IExpr[T, A] {
     def setValue(value: A /*, dispatch: Boolean*/)(implicit tx: T): Unit
 
     def ref: AnyRef

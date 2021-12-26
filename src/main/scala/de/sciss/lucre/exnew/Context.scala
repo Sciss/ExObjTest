@@ -62,7 +62,7 @@ object Context {
     def cast[U <: Txn[U]]: WithTxn[U] = this.asInstanceOf[WithTxn[U]]
   }
 }
-trait Context[T <: Exec /*Txn*/[T]] extends Disposable[T] {
+trait Context[T <: Txn[T]] extends Disposable[T] {
   implicit def targets    : ITargets    [T]
   implicit def cursor     : Cursor      [T]
 // EEE
@@ -85,8 +85,7 @@ trait Context[T <: Exec /*Txn*/[T]] extends Disposable[T] {
 // EEE
 //  def getProperty[A](control: Control, key: String)(implicit tx: T): Option[A]
 
-// EEE
-//  def selfOption(implicit tx: T): Option[Obj[T]]
+  def selfOption(implicit tx: T): Option[Obj[T]]
 
   def visit[U <: Disposable[T]](ref: AnyRef, init: => U)(implicit tx: T): U
 }

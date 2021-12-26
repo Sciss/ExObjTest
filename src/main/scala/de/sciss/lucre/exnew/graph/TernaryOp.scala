@@ -239,7 +239,7 @@ object TernaryOp extends ProductReader[TernaryOp[_, _, _, _]] {
 
   // ----
 
-  private[lucre] final class Expanded[T <: Exec[T], A1, A2, A3, A](op: TernaryOp.Op[A1, A2, A3, A],
+  private[lucre] final class Expanded[T <: Txn[T], A1, A2, A3, A](op: TernaryOp.Op[A1, A2, A3, A],
                                                                    a: IExpr[T, A1], b: IExpr[T, A2],
                                                                    c: IExpr[T, A3])
                                                                   (implicit protected val targets: ITargets[T])

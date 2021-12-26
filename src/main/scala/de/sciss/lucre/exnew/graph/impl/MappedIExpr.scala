@@ -13,11 +13,11 @@
 
 package de.sciss.lucre.exnew.graph.impl
 
-import de.sciss.lucre.Exec
+import de.sciss.lucre.{Exec, Txn}
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
 import de.sciss.lucre.exnew.{Context, IChangeEvent, IExpr, IPull, ITargets}
 
-abstract class MappedIExpr[T <: Exec[T], A1, A](in: IExpr[T, A1])
+abstract class MappedIExpr[T <: Txn[T], A1, A](in: IExpr[T, A1])
                                                (implicit protected val targets: ITargets[T])
   extends IExpr[T, A] with IChangeEventImpl[T, A] {
 
