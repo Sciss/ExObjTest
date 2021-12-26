@@ -3,7 +3,7 @@ lazy val baseNameL        = baseName.toLowerCase
 lazy val projectVersion   = "0.1.0-SNAPSHOT"
 
 lazy val deps = new {
-  val lucre = "4.5.3"
+  val lucre = "4.5.4-SNAPSHOT"
 }
 
 // sonatype plugin requires that these are in global

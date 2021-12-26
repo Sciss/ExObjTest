@@ -39,7 +39,7 @@ object ExSeq extends ProductReader[ExSeq[_]] {
       this
     }
 
-    def value(implicit tx: T): Seq[A] = elems.map(_.value)
+    override def value(implicit context: Context[T], tx: T): Seq[A] = elems.map(_.value)
 
     def dispose()(implicit tx: T): Unit = {
       elems.foreach { in =>

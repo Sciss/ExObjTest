@@ -30,7 +30,7 @@ object Const {
 
     def changed: IChangeEvent[T, A] = IDummyEvent.change
 
-    def value(implicit tx: T): A = peer
+    override def value(implicit context: Context[T], tx: T): A = peer
 
     def dispose()(implicit tx: T): Unit = ()
   }

@@ -14,14 +14,17 @@
 package de.sciss.lucre.exnew
 
 import de.sciss.lucre
-import de.sciss.lucre.{Disposable, Exec, ExprLike}
+import de.sciss.lucre.{Disposable, Exec, ExprLike, Form}
 import de.sciss.serial.{DataOutput, Writable}
 
 object IExpr {
-  trait Var[T <: Exec[T], A] extends IExpr[T, A] with lucre.Ref[T, IExpr[T, A]]
+  trait Var[T <: Exec[T], A] extends IExpr[T, A] /*with lucre.Ref[T, IExpr[T, A]]*/ {
+    def apply()(implicit context: Context[T], tx: T): IExpr[T, A]
+    def update(value: IExpr[T, A])(implicit context: Context[T], tx: T): Unit
+  }
 }
-trait IExpr[T <: Exec[T], +A] extends ExprLike[T, A] with IChangePublisher[T, A] with Disposable[T] with Writable {
-  def value(implicit tx: T): A
+trait IExpr[T <: Exec[T], +A] extends Form[T] /*ExprLike[T, A]*/ with IChangePublisher[T, A] with Disposable[T] with Writable {
+  def value(implicit context: Context[T], tx: T): A
 
   protected def typeId: Int
 

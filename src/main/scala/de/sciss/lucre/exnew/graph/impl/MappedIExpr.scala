@@ -15,7 +15,7 @@ package de.sciss.lucre.exnew.graph.impl
 
 import de.sciss.lucre.Exec
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
-import de.sciss.lucre.exnew.{IChangeEvent, IExpr, IPull, ITargets}
+import de.sciss.lucre.exnew.{Context, IChangeEvent, IExpr, IPull, ITargets}
 
 abstract class MappedIExpr[T <: Exec[T], A1, A](in: IExpr[T, A1])
                                                (implicit protected val targets: ITargets[T])
@@ -28,7 +28,7 @@ abstract class MappedIExpr[T <: Exec[T], A1, A](in: IExpr[T, A1])
 
   protected def mapValue(inValue: A1)(implicit tx: T): A
 
-  def value(implicit tx: T): A = mapValue(in.value)
+  override def value(implicit context: Context[T], tx: T): A = mapValue(in.value)
 
   private[lucre] def pullChange(pull: IPull[T])(implicit tx: T, phase: IPull.Phase): A = {
     val v = pull.applyChange(in.changed)

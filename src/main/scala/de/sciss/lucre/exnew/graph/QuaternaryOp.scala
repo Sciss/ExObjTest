@@ -105,7 +105,7 @@ object QuaternaryOp extends ProductReader[QuaternaryOp[_, _, _, _, _]] {
       op.apply(av, bv, cv, dv)
     }
 
-    def value(implicit tx: T): A = {
+    override def value(implicit context: Context[T], tx: T): A = {
       val av = a.value
       val bv = b.value
       val cv = c.value

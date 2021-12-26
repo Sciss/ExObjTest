@@ -25,7 +25,7 @@ import scala.concurrent.stm.Ref
 
 abstract class ExpandedMapSeqOrOption[T <: Txn[T], A, In[_], P, Out](in: IExpr[T, In[A]], it: It.Expanded[T, A],
                                                                      /* closure: Graph, */ fun: Ex[P])
-                                                                    (implicit protected val targets: ITargets[T], ctx: Context[T])
+                                                                    (implicit protected val targets: ITargets[T])
   extends IExpr[T, Out] with IChangeEventImpl[T, Out] with Caching {
 
   protected type Tuples = In[(IExpr[T, P], Disposable[T])]
@@ -48,7 +48,7 @@ abstract class ExpandedMapSeqOrOption[T <: Txn[T], A, In[_], P, Out](in: IExpr[T
 
   private val ref = Ref.make[Tuples]()
 
-  def connect()(implicit tx: T): this.type = {
+  def connect()(implicit context: Context[T], tx: T): this.type = {
     in .changed.--->(this)
     val inV   = in.value
     val refV  = mkRef(inV)
@@ -65,6 +65,7 @@ abstract class ExpandedMapSeqOrOption[T <: Txn[T], A, In[_], P, Out](in: IExpr[T
   private[lucre] def pullChange(pull: IPull[T])(implicit tx: T, phase: IPull.Phase): Out = {
     val inV = pull.expr(in)
     if (pull.contains(in.changed) && phase.isNow) {
+      import pull.context
       val refV = mkRef(inV)
       disposeRef(ref.swap(refV))
     }
@@ -74,10 +75,10 @@ abstract class ExpandedMapSeqOrOption[T <: Txn[T], A, In[_], P, Out](in: IExpr[T
     }
   }
 
-  private def mkRef(inV: In[A])(implicit tx: T): Tuples =
+  private def mkRef(inV: In[A])(implicit context: Context[T], tx: T): Tuples =
     map(inV) { v =>
       it.setValue(v)
-      val (f, d) = ctx.nested(it) {
+      val (f, d) = context.nested(it) {
         val _f = fun.expand[T]
         _f.changed ---> this
         _f
@@ -85,7 +86,7 @@ abstract class ExpandedMapSeqOrOption[T <: Txn[T], A, In[_], P, Out](in: IExpr[T
       (f, d)
     }
 
-  final def value(implicit tx: T): Out =
+  final override def value(implicit context: Context[T], tx: T): Out =
     IPush.tryPull(this).fold({
       val inV = in.value
       if (isEmpty(inV)) emptyOut
@@ -106,7 +107,7 @@ abstract class ExpandedMapSeqOrOption[T <: Txn[T], A, In[_], P, Out](in: IExpr[T
 
 abstract class ExpandedMapSeqIn[T <: Txn[T], A, P, Out](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
                                                         /* closure: Graph, */ fun: Ex[P])
-                                                       (implicit targets: ITargets[T], ctx: Context[T])
+                                                       (implicit targets: ITargets[T])
   extends ExpandedMapSeqOrOption[T, A, Seq, P, Out](in, it, fun) {
 
   // ---- impl ----
@@ -122,7 +123,7 @@ abstract class ExpandedMapSeqIn[T <: Txn[T], A, P, Out](in: IExpr[T, Seq[A]], it
 
 abstract class ExpandedMapSeqLike[T <: Txn[T], A, P, B](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
                                                         /* closure: Graph, */ fun: Ex[P])
-                                                       (implicit targets: ITargets[T], ctx: Context[T])
+                                                       (implicit targets: ITargets[T])
   extends ExpandedMapSeqIn[T, A, P, Seq[B]](in, it, fun) {
 
   // ---- abstract: out ----
@@ -157,7 +158,7 @@ abstract class ExpandedMapSeqLike[T <: Txn[T], A, P, B](in: IExpr[T, Seq[A]], it
 
 final class ExpandedMapSeq[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
                                               /* closure: Graph, */ fun: Ex[B])
-                                             (implicit targets: ITargets[T], ctx: Context[T])
+                                             (implicit targets: ITargets[T])
   extends ExpandedMapSeqLike[T, A, B, B](in, it, fun) {
 
   override protected def typeId: Int = ???
@@ -176,7 +177,7 @@ final class ExpandedMapSeq[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.Expan
 
 final class ExpandedFlatMapSeq[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
                                                   /* closure: Graph, */ fun: Ex[Seq[B]])
-                                                 (implicit targets: ITargets[T], ctx: Context[T])
+                                                 (implicit targets: ITargets[T])
   extends ExpandedMapSeqLike[T, A, Seq[B], B](in, it, fun) {
 
   override protected def typeId: Int = ???
@@ -196,7 +197,7 @@ final class ExpandedFlatMapSeq[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.E
 
 final class ExpandedFlatMapSeqOption[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
                                                         /* closure: Graph, */ fun: Ex[Option[B]])
-                                                       (implicit targets: ITargets[T], ctx: Context[T])
+                                                       (implicit targets: ITargets[T])
   extends ExpandedMapSeqLike[T, A, Option[B], B](in, it, fun) {
 
   override protected def typeId: Int = ???
@@ -220,7 +221,7 @@ final class ExpandedFlatMapSeqOption[T <: Txn[T], A, B](in: IExpr[T, Seq[A]], it
 
 abstract class ExpandedMapOptionLike[T <: Txn[T], A, P, B](in: IExpr[T, Option[A]], it: It.Expanded[T, A],
                                                            /* closure: Graph, */ fun: Ex[P])
-                                                          (implicit targets: ITargets[T], ctx: Context[T])
+                                                          (implicit targets: ITargets[T])
   extends ExpandedMapSeqOrOption[T, A, Option, P, Option[B]](in, it, fun) {
 
   // ---- impl ----
@@ -238,7 +239,7 @@ abstract class ExpandedMapOptionLike[T <: Txn[T], A, P, B](in: IExpr[T, Option[A
 
 final class ExpandedMapOption[T <: Txn[T], A, B](in: IExpr[T, Option[A]], it: It.Expanded[T, A],
                                                  fun: Ex[B])
-                                                (implicit targets: ITargets[T], ctx: Context[T])
+                                                (implicit targets: ITargets[T])
   extends ExpandedMapOptionLike[T, A, B, B](in, it, fun) {
 
   override protected def typeId: Int = ???
@@ -264,7 +265,7 @@ final class ExpandedMapOption[T <: Txn[T], A, B](in: IExpr[T, Option[A]], it: It
 
 final class ExpandedFlatMapOption[T <: Txn[T], A, B](in: IExpr[T, Option[A]], it: It.Expanded[T, A],
                                                      fun: Ex[Option[B]])
-                                                    (implicit targets: ITargets[T], ctx: Context[T])
+                                                    (implicit targets: ITargets[T])
   extends ExpandedMapOptionLike[T, A, Option[B], B](in, it, fun) {
 
   override protected def typeId: Int = ???

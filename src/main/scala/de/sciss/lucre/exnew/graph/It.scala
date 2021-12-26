@@ -16,7 +16,7 @@ package de.sciss.lucre.exnew.graph
 import de.sciss.lucre.Txn.peer
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.{Context, IChangeEvent, IExpr, IPull, ITargets, graph}
-import de.sciss.lucre.Txn
+import de.sciss.lucre.{Exec, Txn}
 import de.sciss.lucre.exnew.impl.IChangeGeneratorEvent
 import de.sciss.model.Change
 import de.sciss.serial.DataOutput
@@ -24,7 +24,7 @@ import de.sciss.serial.DataOutput
 import scala.concurrent.stm.Ref
 
 object It extends ProductReader[It[_]] {
-  trait Expanded[T <: Txn[T], A] extends IExpr[T, A] {
+  trait Expanded[T <: Exec /*Txn*/[T], A] extends IExpr[T, A] {
     def setValue(value: A /*, dispatch: Boolean*/)(implicit tx: T): Unit
 
     def ref: AnyRef
@@ -51,10 +51,11 @@ object It extends ProductReader[It[_]] {
       throw new IllegalArgumentException("pullUpdate on It.Expanded")
 
     private[lucre] def pullChange(pull: IPull[T])(implicit tx: T, phase: IPull.Phase): A = {
+      import pull.context
       value // pull.resolveChange(isNow = isNow) // throw new AssertionError("Should never be here")
     }
 
-    def value(implicit tx: T): A = valueRef()
+    override def value(implicit context: Context[T], tx: T): A = valueRef()
 
     def dispose()(implicit tx: T): Unit = ()
 

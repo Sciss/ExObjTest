@@ -18,8 +18,8 @@ import de.sciss.lucre.Exec
 import de.sciss.lucre.Log.{event => logEvent}
 
 trait IGeneratorEvent[T <: Exec[T], A] extends IEventImpl[T, A] {
-  final def fire(update: A)(implicit tx: T): Unit = {
+  final def fire(update: A)(implicit context: Context[T], tx: T): Unit = {
     logEvent.debug(s"$this fire $update")
-    IPush(this, update)(tx, targets)
+    IPush(this, update)(tx, context, targets)
   }
 }

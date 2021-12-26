@@ -14,7 +14,7 @@
 package de.sciss.lucre.exnew.graph.impl
 
 import de.sciss.lucre.Txn.peer
-import de.sciss.lucre.exnew.{IChangeEvent, IExpr, IPull, IPush, ITargets}
+import de.sciss.lucre.exnew.{Context, IChangeEvent, IExpr, IPull, IPush, ITargets}
 import de.sciss.lucre.exnew.graph.Obj
 import de.sciss.lucre.exnew.graph.Obj.Bridge
 import de.sciss.lucre.exnew.impl.IChangeGeneratorEvent
@@ -40,20 +40,20 @@ final class ExpandedObjAttr[T <: Txn[T], A](obj: IExpr[T, Obj], key: String)
   private[this] val valueRef  = Ref.make[Option[A]]()
   private[this] val obs       = Ref[Disposable[T]](Disposable.empty)
 
-  def connect()(implicit tx: T): this.type = {
+  def connect()(implicit context: Context[T], tx: T): this.type = {
     obj.changed.--->(this)
     setObj(obj.value, isInit = true)
     this
   }
 
-  private def updateFromObj(now: Option[A])(implicit tx: T): Unit = {
+  private def updateFromObj(now: Option[A])(implicit context: Context[T], tx: T): Unit = {
     val before = valueRef.swap(now)
     if (before != now) {
       fire(Change(before, now))
     }
   }
 
-  private def setObj(newObj: Obj, isInit: Boolean)(implicit tx: T): Option[A] = {
+  private def setObj(newObj: Obj, isInit: Boolean)(implicit context: Context[T], tx: T): Option[A] = {
     // println(s"newObj = $newObj, bridge = $bridge, key = $key")
     val newView = newObj.peer[T].map(p => bridge.cellView(p, key))
     val obsNew  = newView.fold(Disposable.empty[T])(_.react { implicit tx => now =>
@@ -70,7 +70,7 @@ final class ExpandedObjAttr[T <: Txn[T], A](obj: IExpr[T, Obj], key: String)
     now
   }
 
-  def value(implicit tx: T): Option[A] =
+  override def value(implicit context: Context[T], tx: T): Option[A] =
     IPush.tryPull(this).fold(valueRef())(_.now)
 
   private[lucre] def pullChange(pull: IPull[T])(implicit tx: T, phase: IPull.Phase): Option[A] =
@@ -80,6 +80,7 @@ final class ExpandedObjAttr[T <: Txn[T], A](obj: IExpr[T, Obj], key: String)
     } else {
       if (phase.isBefore) valueRef() else {
         val objV = pull.expr(obj)
+        import pull.context
         setObj(objV, isInit = false)
       }
     }

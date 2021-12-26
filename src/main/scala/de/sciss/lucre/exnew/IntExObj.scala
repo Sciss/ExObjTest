@@ -84,7 +84,9 @@ object IntExObj {
       changed.fire(upd)
     } (tx0)
 
-    override def value(implicit tx: T): Int = peer.value
+    override def value(implicit tx: T): Int = {
+      ??? // peer.value
+    }
 
     override def tpe: Obj.Type = IntObj
 

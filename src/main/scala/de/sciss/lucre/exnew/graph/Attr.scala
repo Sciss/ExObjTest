@@ -92,24 +92,28 @@ object Attr extends ProductReader[Attr[_]] {
 
       val ctxHead   = new StmObjCtxCellView[T](ctx.attr, head)
       val ctxFull   = loop(ctxHead, firstSub, tail)
-      ctx.selfOption match {
-        case Some(self) =>
-          val objHead   = new StmObjAttrMapCellView[T](self.attr, head, tx)
-          val objFull   = loop(objHead, firstSub, tail)
-          ctxFull orElse objFull
-        case None =>
-          ctxFull
-      }
+      ???
+// EEE
+//      ctx.selfOption match {
+//        case Some(self) =>
+//          val objHead   = new StmObjAttrMapCellView[T](self.attr, head, tx)
+//          val objFull   = loop(objHead, firstSub, tail)
+//          ctxFull orElse objFull
+//        case None =>
+//          ctxFull
+//      }
 
     } else {
       val ctxFull = bridge.contextCellView[T](key)
-      ctx.selfOption match {
-        case Some(self) =>
-          val objFull = bridge.cellView(self, key)
-          ctxFull orElse objFull
-        case None =>
-          ctxFull
-      }
+      ???
+// EEE
+//      ctx.selfOption match {
+//        case Some(self) =>
+//          val objFull = bridge.cellView(self, key)
+//          ctxFull orElse objFull
+//        case None =>
+//          ctxFull
+//      }
     }
   }
 
@@ -160,11 +164,11 @@ object Attr extends ProductReader[Attr[_]] {
       Disposable.seq(r1, r2)
     }
 
-    def update(v: Option[A])(implicit tx: T): Unit = {
+    override def update(v: Option[A])(implicit /*context: Context[T],*/ tx: T): Unit = {
       firstVr match {
         case Some(vr) =>
           vr.fromAny.fromAny(v.get).foreach { vT =>
-            vr.update(new Const.Expanded(vT))
+            ??? // vr.update(new Const.Expanded(vT))
           }
         case None =>
           secondP.update(v)
@@ -195,38 +199,42 @@ object Attr extends ProductReader[Attr[_]] {
 
       val ctxHead             = new StmObjCtxCellView[T](ctx.attr, head)
       val (ctxFullP, lastSub) = loop(ctxHead, firstSub, tail)
-      ctx.selfOption match {
-        case Some(self) =>
-          val objHead       = new StmObjAttrMapCellView[T](self.attr, head, tx)
-          val (objFullP, _) = loop(objHead, firstSub, tail)
-          new NestedVarCellView(ctxFullP, objFullP, lastSub)
-
-        case None =>
-          new CatVarImpl[T, LObj[T], A](ctxFullP)({ implicit tx => child =>
-            bridge.cellView(child, lastSub)
-          })
-      }
+      ???
+// EEE
+//      ctx.selfOption match {
+//        case Some(self) =>
+//          val objHead       = new StmObjAttrMapCellView[T](self.attr, head, tx)
+//          val (objFullP, _) = loop(objHead, firstSub, tail)
+//          new NestedVarCellView(ctxFullP, objFullP, lastSub)
+//
+//        case None =>
+//          new CatVarImpl[T, LObj[T], A](ctxFullP)({ implicit tx => child =>
+//            bridge.cellView(child, lastSub)
+//          })
+//      }
 
     } else {
-      ctx.selfOption match {
-        case Some(self) =>
-          val firstP  = bridge.contextCellView[T](key)
-          val secondP = bridge.cellView(self, key)
-          val opt: Option[Form[T]] = ctx.attr.get(key)
-          /*val firstVr =*/ opt match {
-          case Some(ex: Var.Expanded[T, _]) =>
-            // work-around for Scala 3.0.2:
-            new FlatVarCellView(firstP, Some(ex), secondP)
-          // Some(ex)
-          case _                            =>
-            new FlatVarCellView(firstP, None, secondP)
-          // None
-        }
-        // new FlatVarCellView(firstP, firstVr, secondP)
-
-        case None =>  // if there is no 'self', simply give up on the idea of attributes
-          CellView.Var.empty
-      }
+      ???
+// EEE
+//      ctx.selfOption match {
+//        case Some(self) =>
+//          val firstP  = bridge.contextCellView[T](key)
+//          val secondP = bridge.cellView(self, key)
+//          val opt: Option[Form[T]] = ctx.attr.get(key)
+//          /*val firstVr =*/ opt match {
+//          case Some(ex: Var.Expanded[T, _]) =>
+//            // work-around for Scala 3.0.2:
+//            new FlatVarCellView(firstP, Some(ex), secondP)
+//          // Some(ex)
+//          case _                            =>
+//            new FlatVarCellView(firstP, None, secondP)
+//          // None
+//        }
+//        // new FlatVarCellView(firstP, firstVr, secondP)
+//
+//        case None =>  // if there is no 'self', simply give up on the idea of attributes
+//          CellView.Var.empty
+//      }
     }
   }
 
@@ -286,7 +294,7 @@ object Attr extends ProductReader[Attr[_]] {
 
       private[this] val obsAttr = Ref(Disposable.empty[T])
 
-      private def mkObs()(implicit tx: T): Disposable[T] = attrView.react { implicit tx => now =>
+      private def mkObs()(implicit context: Context[T], tx: T): Disposable[T] = attrView.react { implicit tx => now =>
         val before  = ref.swap(now)(tx.peer)
         if (before != now) {
           val before1   = before.getOrElse(default.value)
@@ -296,14 +304,14 @@ object Attr extends ProductReader[Attr[_]] {
         }
       }
 
-      def connect()(implicit tx: T): this.type = {
+      def connect()(implicit context: Context[T], tx: T): this.type = {
         ref() = attrView()
         obsAttr() = mkObs()
         default.changed.--->(this)
         this
       }
 
-      def value(implicit tx: T): A = {
+      override def value(implicit context: Context[T], tx: T): A = {
         val opt = attrView()
         opt.getOrElse(default.value)
       }
@@ -315,6 +323,7 @@ object Attr extends ProductReader[Attr[_]] {
         } else if (pull.isOrigin(this)) {
           pull.resolveExpr(this)
         } else {
+          import pull.context
           value
         }
       }
@@ -356,20 +365,20 @@ object Attr extends ProductReader[Attr[_]] {
 
     private[this] val obsAttr = Ref(Disposable.empty[T])
 
-    private def mkObs()(implicit tx: T): Disposable[T] = attrView.react { implicit tx => now =>
+    private def mkObs()(implicit context: Context[T], tx: T): Disposable[T] = attrView.react { implicit tx => now =>
       val before = ref.swap(now)(tx.peer)
       val ch = Change(before, now)
       // println(s"Attr.Expanded change $ch")
       if (ch.isSignificant) fire(ch)
     }
 
-    def connect()(implicit tx: T): this.type = {
+    def connect()(implicit context: Context[T], tx: T): this.type = {
       ref() = value
       obsAttr() = mkObs()
       this
     }
 
-    def value(implicit tx: T): Option[A] = attrView()
+    override def value(implicit context: Context[T], tx: T): Option[A] = attrView()
 
     private[lucre] def pullChange(pull: IPull[T])(implicit tx: T, phase: IPull.Phase): Option[A] =
       pull.resolveExpr(this)

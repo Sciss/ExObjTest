@@ -28,9 +28,9 @@ object CaseDef {
   sealed trait Expanded[T <: Txn[T], A] extends IExpr[T, A] {
     def fromAny: FromAny[A]
 
-    def select(value: Any)(implicit tx: T): Boolean
+    def select(value: Any)(implicit context: Context[T], tx: T): Boolean
 
-    def commit()(implicit tx: T): Unit
+    def commit()(implicit context: Context[T], tx: T): Unit
   }
 }
 sealed trait CaseDef[A] extends Ex[A] with ProductWithAdjuncts {
@@ -53,15 +53,15 @@ object Quote extends ProductReader[Quote[_]] {
       fromAny .write(out)
     }
 
-    def select(value: Any)(implicit tx: T): Boolean =
+    override def select(value: Any)(implicit context: Context[T], tx: T): Boolean =
       fromAny.fromAny(value) match {
         case Some(v) if v == in.value  => true
         case _                         => false
       }
 
-    def commit()(implicit tx: T): Unit = ()
+    override def commit()(implicit context: Context[T], tx: T): Unit = ()
 
-    def value(implicit tx: T): A = in.value
+    override def value(implicit context: Context[T], tx: T): A = in.value
 
     def dispose()(implicit tx: T): Unit = in.dispose()
 
@@ -226,17 +226,18 @@ object Var extends ProductReader[Var[_]] {
       this
     }
 
-    def apply()(implicit tx: T): IExpr[T, A] = ref()
+    override def apply()(implicit context: Context[T], tx: T): IExpr[T, A] = ref()
 
-    def swap(value: IExpr[T, A])(implicit tx: T): IExpr[T, A] = {
-      val old = apply()
-      update(value)
-      old
-    }
+// EEE
+//    def swap(value: IExpr[T, A])(implicit tx: T): IExpr[T, A] = {
+//      val old = apply()
+//      update(value)
+//      old
+//    }
 
-    def value(implicit tx: T): A = ref().value
+    override def value(implicit context: Context[T], tx: T): A = ref().value
 
-    def update(v: IExpr[T, A])(implicit tx: T): Unit = {
+    override def update(v: IExpr[T, A])(implicit context: Context[T], tx: T): Unit = {
       val before = ref()
       if (before != v) {
         before.changed -/-> this.changed
@@ -253,7 +254,7 @@ object Var extends ProductReader[Var[_]] {
       if (pull.isOrigin(this)) pull.resolveExpr(this)
       else pull.expr(ref())
 
-    def select(value: Any)(implicit tx: T): Boolean =
+    override def select(value: Any)(implicit context: Context[T], tx: T): Boolean =
       fromAny.fromAny(value) match {
         case Some(v) =>
           selRef() = v
@@ -265,7 +266,7 @@ object Var extends ProductReader[Var[_]] {
     //    def commit()(implicit tx: T): Unit =
     //      ref() = new graph.Const.Expanded(selRef())
 
-    def commit()(implicit tx: T): Unit =
+    override def commit()(implicit context: Context[T], tx: T): Unit =
       update(new graph.Const.Expanded(selRef()))
 
     def dispose()(implicit tx: T): Unit =

@@ -13,7 +13,7 @@
 
 package de.sciss.lucre.exnew
 
-import de.sciss.lucre.{AnyTxn, Cursor, Disposable, Form, MapObjLike, Obj, Observable, Source, Txn}
+import de.sciss.lucre.{AnyTxn, Cursor, Disposable, Exec, Form, MapObjLike, Obj, Observable, Source, Txn}
 import de.sciss.lucre.edit.UndoManager
 import de.sciss.lucre.exnew.graph.It
 // EEE
@@ -21,7 +21,7 @@ import de.sciss.lucre.exnew.graph.It
 //import de.sciss.lucre.exnew.impl.ContextImpl
 
 object Context {
-  type Attr[T <: Txn[T]] = MapObjLike[T, String, Form[T]]
+  type Attr[T <: Exec /*Txn*/[T]] = MapObjLike[T, String, Form[T]]
 
   def emptyAttr[T <: Txn[T]]: Attr[T] = anyEmptyAttr.asInstanceOf[EmptyAttr[T]]
 
@@ -62,7 +62,7 @@ object Context {
     def cast[U <: Txn[U]]: WithTxn[U] = this.asInstanceOf[WithTxn[U]]
   }
 }
-trait Context[T <: Txn[T]] extends Disposable[T] {
+trait Context[T <: Exec /*Txn*/[T]] extends Disposable[T] {
   implicit def targets    : ITargets    [T]
   implicit def cursor     : Cursor      [T]
 // EEE
@@ -85,7 +85,8 @@ trait Context[T <: Txn[T]] extends Disposable[T] {
 // EEE
 //  def getProperty[A](control: Control, key: String)(implicit tx: T): Option[A]
 
-  def selfOption(implicit tx: T): Option[Obj[T]]
+// EEE
+//  def selfOption(implicit tx: T): Option[Obj[T]]
 
   def visit[U <: Disposable[T]](ref: AnyRef, init: => U)(implicit tx: T): U
 }

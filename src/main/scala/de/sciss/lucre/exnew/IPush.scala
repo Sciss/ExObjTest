@@ -25,7 +25,7 @@ import scala.collection.immutable.{Map => IMap}
 
 object IPush {
   private[lucre] def apply[T <: Exec[T], A](origin: IEvent[T, A], update: A)
-                                           (implicit tx: T, targets: ITargets[T]): Unit = {
+                                           (implicit tx: T, context: Context[T], targets: ITargets[T]): Unit = {
     val push = new Impl(origin, update)
     logEvent.debug("ipush begin")
     push.visitChildren(origin)
@@ -97,7 +97,7 @@ object IPush {
   }
 
   private final class Impl[T <: Exec[T]](origin: IEvent[T, Any], val update: Any)
-                                        (implicit tx: T, targets: ITargets[T])
+                                        (implicit tx: T, val context: Context[T], targets: ITargets[T])
     extends IPull[T] {
 
     private[this] var pushMap   = IMap(origin -> NoParents[T])
@@ -292,6 +292,8 @@ object IPull {
   case object Now    extends Phase { def isBefore = false ; def isNow = true  }
 }
 trait IPull[T <: Exec[T]] {
+  implicit def context: Context[T]
+
   /** Assuming that the caller is origin of the event, resolves the update of the given type. */
   def resolve[A]: A
 

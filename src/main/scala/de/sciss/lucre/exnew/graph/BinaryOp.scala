@@ -1351,7 +1351,7 @@ object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {
       op.apply(av, bv)
     }
 
-    def value(implicit tx: T): A = {
+    override def value(implicit context: Context[T], tx: T): A = {
       val av = a.value
       val bv = b.value
       value1(av, bv)

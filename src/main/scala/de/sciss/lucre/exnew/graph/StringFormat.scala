@@ -43,7 +43,7 @@ object StringFormat extends ProductReader[StringFormat] {
       this
     }
 
-    def value(implicit tx: T): String = {
+    override def value(implicit context: Context[T], tx: T): String = {
       val inV   = in.value
       val argsV = args.map(_.value)
       tryFormat(inV, argsV)
