@@ -21,8 +21,8 @@ object Test {
     val (inH, outH) = system.step { implicit tx =>
       import ExImport._
       import de.sciss.lucre.exnew.graph._
-//      val ex: Ex[Int] = "in".attr(0) * 2
-      val ex: Ex[Int] = Var(123) * 2
+      val ex: Ex[Int] = "in".attr(0) * 2
+//      val ex: Ex[Int] = Var(123) * 2
       val input     = IntObj.newVar[T](0)
       val transform = IntExObj[T](ex)
       transform.attr.put("in", input)
