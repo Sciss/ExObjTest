@@ -19,7 +19,7 @@ import scala.annotation.tailrec
 import scala.concurrent.stm.TMap
 
 object ITargets {
-  def apply[T <: Txn[T]]: ITargets[T] = new Impl[T]
+  def apply[T <: Txn[T]](): ITargets[T] = new Impl[T]
 
   private final class Impl[T <: Txn[T]] extends ITargets[T] {
     import Txn.peer

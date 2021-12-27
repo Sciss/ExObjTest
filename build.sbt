@@ -40,6 +40,7 @@ lazy val root = project.withId(baseNameL).in(file("."))
     libraryDependencies ++= Seq(
       "de.sciss" %% "lucre-core" % deps.lucre,
       "de.sciss" %% "lucre-expr" % deps.lucre,
+      "de.sciss" %% "lucre-bdb"  % deps.lucre,
     ),
   )
 

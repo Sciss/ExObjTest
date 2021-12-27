@@ -20,10 +20,25 @@ import de.sciss.lucre.Adjunct.{HasDefault, Num, NumDiv, NumDouble, NumInt, NumLo
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
 import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts, Txn}
-import de.sciss.serial.{DataOutput, Writable}
+import de.sciss.serial.{DataInput, DataOutput, Writable}
 import de.sciss.span.SpanLike
 
 object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {
+  object Op {
+    def read[A, B, C](rIn: RefMapIn): Op[A, B, C] = {
+      val in = rIn.in
+      val serVer = in.readByte()
+      require (serVer == 0)
+      val name = in.readUTF()
+      val (r, adj) = name match {
+        case Plus .name => (Plus  , in.readShort())
+        case Minus.name => (Minus , in.readShort())
+        case Times.name => (Times , in.readShort())
+      }
+      val p = r.read(rIn, key = "???", arity = 0, adj = adj)
+      p.asInstanceOf[Op[A, B, C]]
+    }
+  }
   abstract class Op[A, B, C] extends Product with Writable {
     def apply(a: A, b: B): C
   }
@@ -53,6 +68,8 @@ object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {
   // ---- (Num, Num) -> Num ----
 
   object Plus extends ProductReader[Plus[_, _, _]] {
+    final val name = "Plus"
+
     override def read(in: RefMapIn, key: String, arity: Int, adj: Int): Plus[_, _, _] = {
       require(arity == 0 && adj == 2)
       val _widen: Widen2[Any, Any, Any] = in.readAdjunct()
@@ -65,12 +82,14 @@ object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {
 
     def apply(a: A, b: B): C = num.plus(widen.widen1(a), widen.widen2(b))
 
-    def name = "Plus"
+    def name: String = Plus.name
 
     override def adjuncts: Adjuncts = widen :: num :: Nil
   }
 
   object Minus extends ProductReader[Minus[_, _, _]] {
+    final val name = "Minus"
+
     override def read(in: RefMapIn, key: String, arity: Int, adj: Int): Minus[_, _, _] = {
       require(arity == 0 && adj == 2)
       val _widen: Widen2[Any, Any, Any] = in.readAdjunct()
@@ -83,12 +102,14 @@ object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {
 
     def apply(a: A, b: B): C = num.minus(widen.widen1(a), widen.widen2(b))
 
-    def name = "Minus"
+    def name: String = Minus.name
 
     override def adjuncts: Adjuncts = widen :: num :: Nil
   }
 
   object Times extends ProductReader[Times[_, _, _]] {
+    final val name = "Times"
+
     override def read(in: RefMapIn, key: String, arity: Int, adj: Int): Times[_, _, _] = {
       require(arity == 0 && adj == 2)
       val _widen: Widen2[Any, Any, Any] = in.readAdjunct()
@@ -101,7 +122,7 @@ object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {
 
     def apply(a: A, b: B): C = num.times(widen.widen1(a), widen.widen2(b))
 
-    def name = "Times"
+    def name: String = Times.name
 
     override def adjuncts: Adjuncts = widen :: num :: Nil
   }
@@ -1328,8 +1349,18 @@ object BinaryOp extends ProductReader[BinaryOp[_, _, _ , _]] {
 
   // ---- Impl ----
 
-  private object Expanded {
+  private[lucre] object Expanded extends IExprFactory {
     final val typeId = 0x42696E4F // "BinO"
+
+    override def readIdentified[T <: Txn[T]](in: DataInput)(implicit ctx: Context[T], tx: T): IExpr[T, Any] = {
+      val serVer = in.readByte()
+      require (serVer == 0)
+      val _op = Op.read[Any, Any, Any](new RefMapIn(in))
+      val _a  = IExpr.read[T, Any](in)
+      val _b  = IExpr.read[T, Any](in)
+      implicit val tgt: ITargets[T] = ITargets()
+      new Expanded[T, Any, Any, Any, Any](_op, _a, _b)
+    }
   }
   private[lucre] final class Expanded[T <: Txn[T], A1, A2, A3, A](op: BinaryOp.Op[A1, A2, A],
                                                                    a: IExpr[T, A1], b: IExpr[T, A2])

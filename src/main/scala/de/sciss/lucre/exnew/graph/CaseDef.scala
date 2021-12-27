@@ -16,11 +16,12 @@ package de.sciss.lucre.exnew.graph
 import de.sciss.lucre.Adjunct.{FromAny, HasDefault, NumInt}
 import de.sciss.lucre.Txn.peer
 import de.sciss.lucre.exnew.ExElem.{ProductReader, RefMapIn}
+import de.sciss.lucre.exnew.ExSeq.Expanded
 import de.sciss.lucre.exnew.impl.IChangeGeneratorEvent
-import de.sciss.lucre.exnew.{Arrow, Context, IChangeEvent, IExpr, IPull, ITargets, graph}
+import de.sciss.lucre.exnew.{Arrow, Context, IChangeEvent, IExpr, IExprFactory, IPull, ITargets, graph}
 import de.sciss.lucre.{Adjunct, Disposable, ProductWithAdjuncts, Txn}
 import de.sciss.model.Change
-import de.sciss.serial.DataOutput
+import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.concurrent.stm.Ref
 
@@ -208,8 +209,17 @@ object Var extends ProductReader[Var[_]] {
 //      obs.dispose()
 //  }
 
-  private object ExpandedImpl {
+  private[lucre] object ExpandedImpl extends IExprFactory {
     final val typeId = 0x56617220 // "Var "
+
+    override def readIdentified[T <: Txn[T]](in: DataInput)(implicit ctx: Context[T], tx: T): IExpr[T, Any] = {
+      val serVer = in.readByte()
+      require (serVer == 0)
+      val _init  = IExpr.read[T, Any](in)
+      implicit val tgt: ITargets[T] = ITargets()
+      implicit val _fromAny: FromAny[Any] = Adjunct.readT(in)
+      new ExpandedImpl[T, Any](_init)
+    }
   }
   private final class ExpandedImpl[T <: Txn[T], A](init: IExpr[T, A])
                                                   (implicit protected val targets: ITargets[T],

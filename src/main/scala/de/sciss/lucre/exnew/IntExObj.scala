@@ -29,7 +29,7 @@ object IntExObj {
 
   def apply[T <: Txn[T]](ex: Ex[Int])(implicit tx: T): IntObj[T] = {
     val tgt = Targets[T]()
-    new IntEx[T](ex, tgt, tx)
+    new New[T](ex, tgt, tx)
   }
 
   private[this] final val INT_EX_SER_VERSION = 0x4945
@@ -57,9 +57,9 @@ object IntExObj {
                                            (implicit tx: T): IntObj[T] = {
       val cookie = in.readShort()
       require(cookie == INT_EX_SER_VERSION, s"Unexpected cookie $cookie")
-      val ref   = new ExElem.RefMapIn(in)
-      val ex    = ref.readEx[Int]()
-      new IntEx[T](ex, targets, tx)
+//      val ref   = new ExElem.RefMapIn(in)
+//      val ex    = ref.readEx[Int]()
+      new Read[T](targets, in, tx)
     }
 
     override def name: String = "Ex[Int]"
@@ -67,22 +67,45 @@ object IntExObj {
     override final val opLo = -1
     override final val opHi = -1
   }
-  private final class IntEx[T <: Txn[T]](ex: Ex[Int], protected val targets: Targets[T], tx0: T)
+
+  private final class Read[T <: Txn[T]](protected val targets: Targets[T], in: DataInput, tx0: T) extends Impl[T] {
+    override protected def peer: IExpr[T, A] = {
+      implicit val ctx: Context[T] = new HeadlessContext[T](tx0.newHandle(this: Obj[T]))
+      val res = IExpr.read[T, A](in)(ctx, tx0)
+      ctx.dispose()(tx0)
+      res
+    }
+  }
+
+  private final class New[T <: Txn[T]](ex: Ex[Int], protected val targets: Targets[T], tx0: T) extends Impl[T] {
+    override protected def peer: IExpr[T, A] = {
+      implicit val ctx: Context[T] = new HeadlessContext[T](tx0.newHandle(this: Obj[T]))
+      val res = ex.expand[T](ctx, tx0)
+      ctx.dispose()(tx0)
+      res
+    }
+  }
+
+  private abstract class Impl[T <: Txn[T]]
     extends IntObj[T] with ExprNodeImpl[T, Int] {
+
+    protected def peer: IExpr[T, Int]
 
     override def toString = s"Expr$id @${hashCode.toHexString}"
 
     type A = Int
 
-    private[this] val ctx : Context[T]    = new HeadlessContext[T](tx0.newHandle[IntObj[T]](this))
-    private[this] val peer: IExpr[T, Int] = ex.expand[T](ctx, tx0)
-    private[this] val obs : Disposable[T] = peer.changed.react { implicit tx => upd =>
-      println(s"$this fire($upd)")
-      changed.fire(upd)
-    } (tx0)
+//    private[this] val ctx : Context[T]    = new HeadlessContext[T](tx0.newHandle[IntObj[T]](this))
+//    private[this] val obs : Disposable[T] = peer.changed.react { implicit tx => upd =>
+//      println(s"$this fire($upd)")
+//      changed.fire(upd)
+//    } (tx0)
 
     override def value(implicit tx: T): Int = {
-      ??? // peer.value
+      implicit val ctx: Context[T] = new HeadlessContext[T](tx.newHandle(this: Obj[T]))
+      val res = peer.value
+      ctx.dispose()
+      res
     }
 
     override def tpe: Obj.Type = IntObj
@@ -105,31 +128,33 @@ object IntExObj {
       out.writeByte(1)  // 'node not var'
       out.writeInt(-1)  // opId
       out.writeShort(INT_EX_SER_VERSION)
-      val ref = new ExElem.RefMapOut(out) {
-        override protected def writeIdentifiedProduct(p: Product): Unit = {
-          p match {
-            case Attr.WithDefault(key, _) => println(s"EVENT KEY (d): $key")
-            case Attr(key)                => println(s"EVENT KEY    : $key")
-            case _ =>
-          }
-          super.writeIdentifiedProduct(p)
-        }
-      }
-      ref.writeElem(ex)
+//      val ref = new ExElem.RefMapOut(out) {
+//        override protected def writeIdentifiedProduct(p: Product): Unit = {
+//          p match {
+//            case Attr.WithDefault(key, _) => println(s"EVENT KEY (d): $key")
+//            case Attr(key)                => println(s"EVENT KEY    : $key")
+//            case _ =>
+//          }
+//          super.writeIdentifiedProduct(p)
+//        }
+//      }
+//      ref.writeElem(ex)
+//      IExpr.format.write(peer, out)
+      peer.write(out)
     }
 
     override protected def disposeData()(implicit tx: T): Unit = {
       //      disconnect()
-      obs .dispose()
+//      obs .dispose()
       peer.dispose()
-      ctx .dispose()
+//      ctx .dispose()
     }
 
     /** Makes a deep copy of an element, possibly translating it to a different system `Out`. */
     override private[lucre] def copy[Out <: Txn[Out]]()(implicit txIn: T, txOut: Out,
                                                         context: Copy[T, Out]): IntObj[Out] = {
       val newTgt = Event.Targets[Out]()
-      new IntEx[Out](ex, newTgt, txOut)
+      ??? // new IntEx[Out](ex, newTgt, txOut)
     }
   }
 }

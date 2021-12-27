@@ -14,13 +14,20 @@
 package de.sciss.lucre.exnew
 package graph
 
+import de.sciss.lucre.Txn
 import de.sciss.lucre.exnew.impl.IDummyEvent
-import de.sciss.lucre.{Exec, Txn}
-import de.sciss.serial.DataOutput
+import de.sciss.serial.{DataInput, DataOutput}
 
 object Const {
-  private object Expanded {
+  private[lucre] object Expanded extends IExprFactory {
     final val typeId = 0x436F6E73 // "Cons"
+
+    override def readIdentified[T <: Txn[T]](in: DataInput)(implicit ctx: Context[T], tx: T): IExpr[T, Any] = {
+      val serVer = in.readByte()
+      require (serVer == 0)
+      val _peer = ExElem.format[Any].read(in)
+      new Expanded[T, Any](_peer)
+    }
   }
   private[sciss] final class Expanded[T <: Txn[T], A](peer: A)
     extends IExpr[T, A] {

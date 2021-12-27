@@ -18,13 +18,25 @@ import de.sciss.lucre.exnew.graph.impl.{ExpandedMapSeqIn, MappedIExpr}
 import de.sciss.lucre.exnew.graph.{Ex, It, Obj}
 import de.sciss.lucre.exnew.impl.IChangeEventImpl
 import de.sciss.lucre.{Adjunct, ProductWithAdjuncts, Txn, expr}
-import de.sciss.serial.{DataOutput, TFormat, Writer}
+import de.sciss.serial.{DataInput, DataOutput, TFormat, Writer}
 
 object ExSeq extends ProductReader[ExSeq[_]] {
+  private[lucre] object Expanded extends IExprFactory {
+    final val typeId = 0x53657120 // "Seq "
+
+    override def readIdentified[T <: Txn[T]](in: DataInput)(implicit ctx: Context[T], tx: T): IExpr[T, Any] = {
+      val serVer = in.readByte()
+      require (serVer == 0)
+      val sz      = in.readInt()
+      val _elems  = Seq.fill(sz)(IExpr.read[T, Any](in))
+      implicit val tgt: ITargets[T] = ITargets()
+      new Expanded[T, Any](_elems)
+    }
+  }
   private final class Expanded[T <: Txn[T], A](elems: Seq[IExpr[T, A]])(implicit protected val targets: ITargets[T])
     extends IExpr[T, Seq[A]] with IChangeEventImpl[T, Seq[A]] {
 
-    override protected def typeId: Int = ???
+    override protected def typeId: Int = Expanded.typeId
 
     override protected def writeData(out: DataOutput): Unit = {
       out.writeByte(0)  // serialization version
@@ -60,12 +72,25 @@ object ExSeq extends ProductReader[ExSeq[_]] {
     }
   }
 
+  private[lucre] object CountExpanded extends IExprFactory {
+    final val typeId = 0x5371436F // "SqCo"
+
+    override def readIdentified[T <: Txn[T]](in: DataInput)(implicit ctx: Context[T], tx: T): IExpr[T, Any] = {
+      val serVer = in.readByte()
+      require (serVer == 0)
+      val _in   = IExpr.read[T, Seq[Any]](in)
+      val _it   = ???
+      val _fun  = ExElem.read[Boolean](in)
+      implicit val tgt: ITargets[T] = ITargets()
+      new CountExpanded[T, Any](_in, _it, _fun)
+    }
+  }
   private final class CountExpanded[T <: Txn[T], A](in: IExpr[T, Seq[A]], it: It.Expanded[T, A],
                                                     fun: Ex[Boolean])
                                                    (implicit targets: ITargets[T], ctx: Context[T])
     extends ExpandedMapSeqIn[T, A, Boolean, Int](in, it, fun) {
 
-    override protected def typeId: Int = ???
+    override protected def typeId: Int = CountExpanded.typeId
 
     override protected def writeData(out: DataOutput): Unit = {
       out.writeByte(0)  // serialization version
