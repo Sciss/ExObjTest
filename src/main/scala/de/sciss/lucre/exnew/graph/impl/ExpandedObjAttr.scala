@@ -43,7 +43,7 @@ final class ExpandedObjAttr[T <: Txn[T], A](obj: IExpr[T, Obj], key: String, tx0
   private def setObj(newObj: Obj, isInit: Boolean)(implicit tx: T): Option[A] = {
     // println(s"newObj = $newObj, bridge = $bridge, key = $key")
     val newView = newObj.peer[T].map(p => bridge.cellView(p, key))
-    val obsNew  = newView.fold(Disposable.empty[T])(_.react { implicit tx => now =>
+    val obsNew  = newView.fold(Disposable.empty[T])(_.react { implicit tx => now => // RRR
       updateFromObj(now)
     })
     val now: Option[A] = newView.flatMap(_.apply())

@@ -31,7 +31,7 @@ final class StmObjAttrMapCellView[T <: Txn[T]](attr0: LObj.AttrMap[T], key: Stri
     attr.get(key)
 
   def react(fun: T => Option[LObj[T]] => Unit)(implicit tx: T): Disposable[T] = {
-    attr.changed.react { implicit tx => upd =>
+    attr.changed.react { implicit tx => upd =>  // RRR
       upd.changes.foreach {
         case LObj.AttrAdded(`key`, obj) =>
           fun(tx)(Some(obj))

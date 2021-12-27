@@ -41,6 +41,8 @@ object IntExObj {
   private[this] final class HeadlessContext[T <: Txn[T]](_selfH: Source[T, Obj[T]])
     extends ContextMixin[T] {
 
+    override def connect: Boolean = false
+
     override protected def selfH: Option[Source[T, Obj[T]]] = Some(_selfH)
 
     private def unsupported(what: String): Nothing =

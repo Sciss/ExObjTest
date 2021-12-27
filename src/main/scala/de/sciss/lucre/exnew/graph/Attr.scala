@@ -127,8 +127,8 @@ object Attr extends ProductReader[Attr[_]] {
 
     def react(fun: T => Option[A] => Unit)(implicit tx: T): Disposable[T] = {
       val f: T => Option[LObj[T]] => Unit = { implicit tx => _ => fun(tx)(apply()) }
-      val r1 = firstP .react(f)
-      val r2 = secondP.react(f)
+      val r1 = firstP .react(f) // RRR
+      val r2 = secondP.react(f) // RRR
       Disposable.seq(r1, r2)
     }
 
@@ -153,8 +153,8 @@ object Attr extends ProductReader[Attr[_]] {
 
     def react(fun: T => Option[A] => Unit)(implicit tx: T): Disposable[T] = {
       val f: T => Option[A] => Unit = { implicit tx => _ => fun(tx)(apply()) }
-      val r1 = firstP .react(f)
-      val r2 = secondP.react(f)
+      val r1 = firstP .react(f) // RRR
+      val r2 = secondP.react(f) // RRR
       Disposable.seq(r1, r2)
     }
 
@@ -274,7 +274,7 @@ object Attr extends ProductReader[Attr[_]] {
 
       private[this] val ref = Ref(attrView()(tx0))
 
-      private[this] val obsAttr = attrView.react { implicit tx => now =>
+      private[this] val obsAttr = attrView.react { implicit tx => now =>  // RRR
         val before  = ref.swap(now)(tx.peer)
         if (before != now) {
           val before1   = before.getOrElse(default.value)
@@ -331,7 +331,7 @@ object Attr extends ProductReader[Attr[_]] {
 
     private[this] val ref = Ref(value(tx0))
 
-    private[this] val obsAttr = attrView.react { implicit tx => now =>
+    private[this] val obsAttr = attrView.react { implicit tx => now =>  // RRR
       val before = ref.swap(now)(tx.peer)
       val ch = Change(before, now)
       // println(s"Attr.Expanded change $ch")

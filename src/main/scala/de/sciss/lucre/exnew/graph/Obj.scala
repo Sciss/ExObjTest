@@ -102,7 +102,7 @@ object Obj {
 
       def readIdentifiedAdjunct(in: DataInput): Adjunct = this
 
-      def cellView[T <: Txn[T]](obj: LObj[T], key: String)(implicit tx: T): CellView.Var[T, Option[Obj]] =
+      override def cellView[T <: Txn[T]](obj: LObj[T], key: String)(implicit tx: T): CellView.Var[T, Option[Obj]] =
         new ObjCellViewVarImpl[T, LObj, Obj](tx.newHandle(obj), key) {
           protected def lower(peer: LObj[T])(implicit tx: T): Obj =
             wrap(peer)

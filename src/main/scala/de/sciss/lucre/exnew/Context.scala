@@ -71,6 +71,9 @@ trait Context[T <: Txn[T]] extends Disposable[T] {
 
   def attr/*(implicit tx: T)*/: Context.Attr[T]
 
+  /** Whether the event dispatch system should be connected or not. */
+  def connect: Boolean
+
 // EEE
 //  /** Prepares graph expansion by copying control properties over
 //   * for subsequent look-up through `getProperty`.

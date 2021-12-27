@@ -30,3 +30,24 @@ would have to unwrap the whole thing. Let's restate the findings:
 - as an optimisation, we could keep the new explicit `connect` methods on the `IExpr`s, and skip calling  
   them using a flag on the context. This would avoid a lot of setup when essentially the `IEvent` queue
   is never used
+
+---
+
+## Calls
+
+- `Obj.Attr` -> `ExpandedObjAttr` -> `obj.changed.--->...`
+- `Obs.Bridge.cellView` -> e.g. `ObjCellViewVarImpl`
+- `Attr` if `selfOption.isDefined` -> `StmObjAttrMapCellView`
+- `Attr` if `isNested` -> `StmObjCtxCellView` (`AbstractCtxCellView`)
+- `Obj.Bridge.contextCellView` -> `AbstractCtxCellView`
+
+## Dynamic
+
+The problematic bit is updating the objects that are observed. Say `"in".attr(0)`, and say that entry already
+exists. Now we would gather in the test expansion the event listeners for the attribute map as well as for
+the particular `IntObj` found in the attribute map's entry. Now the object is replaced, eventually resulting
+in a `pullUpdate` of the wrapping ex obj. This would cause in some form of caching `IExpr` a kind of
+`setObj` method to be called, disposing the old listener and installing a new listener. Basically the
+ex obj has a list of events it listens to, and the call to `value` or `pullUpdate` produces a new such list;
+this list may be different from the old list; in that case, we would have to unregister `oldList diff newList`,
+and newly register `newList diff oldList`.

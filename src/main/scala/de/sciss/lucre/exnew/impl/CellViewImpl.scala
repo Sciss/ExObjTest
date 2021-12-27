@@ -91,7 +91,7 @@ object CellViewImpl {
 
     private val valObs = Ref(null: Disposable[T])
 
-    private val mapObs = map.changed.react { implicit tx => u =>
+    private val mapObs = map.changed.react { implicit tx => u =>  // RRR
       u.changes.foreach {
         case MapObj.Added  (`key`, expr) =>
           valueAdded(expr)
@@ -108,7 +108,7 @@ object CellViewImpl {
     map.get(key)(tx0).foreach(valueAdded(_)(tx0))
 
     private def valueAdded(expr: _Ex[T])(implicit tx: T): Unit = {
-      val res = expr.changed.react { implicit tx => {
+      val res = expr.changed.react { implicit tx => { // RRR
         case Change(_, now) =>
           fun(tx)(Some(now))
         //            val opt = mapUpdate(ch)
@@ -189,7 +189,7 @@ object CellViewImpl {
     protected def h: Source[T, Repr]
 
     def react(fun: T => A => Unit)(implicit tx: T): Disposable[T] =
-      h().changed.react { implicit tx => ch => fun(tx)(ch.now) }
+      h().changed.react { implicit tx => ch => fun(tx)(ch.now) }  // RRR
 
     def apply()(implicit tx: T): A = h().value
   }
@@ -235,8 +235,8 @@ object CellViewImpl {
       first() orElse second()
 
     def react(fun: Tx => Option[A] => Unit)(implicit tx: Tx): Disposable[Tx] = {
-      val r1 = first  .react { implicit tx => opt => fun(tx)(opt      orElse second() ) }
-      val r2 = second .react { implicit tx => opt => fun(tx)(first()  orElse opt      ) }
+      val r1 = first  .react { implicit tx => opt => fun(tx)(opt      orElse second() ) } // RRR
+      val r2 = second .react { implicit tx => opt => fun(tx)(first()  orElse opt      ) } // RRR
       Disposable.seq(r1, r2)
     }
   }
@@ -449,7 +449,9 @@ object CellViewImpl {
 
   // adding optional undo support (when present)
   private final class UndoAttrImpl[T <: Txn[T], A, E[~ <: Txn[~]] <: _Expr[~, A]](
-                                                                                   h: Source[T, Obj.AttrMap[T]], key: String)(implicit tpe: _Expr.Type[A, E])
+                                                                                   h: Source[T, Obj.AttrMap[T]],
+                                                                                   key: String)
+                                                                                 (implicit tpe: _Expr.Type[A, E])
     extends AttrImpl[T, A, E](h, key) {
 
     protected def putImpl(map: AttrMap[T], value: E[T])(implicit tx: T): Unit =

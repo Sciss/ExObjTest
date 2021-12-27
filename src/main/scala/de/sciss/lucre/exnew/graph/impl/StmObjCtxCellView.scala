@@ -55,7 +55,7 @@ abstract class AbstractCtxCellView[T <: Txn[T], A](attr: Context.Attr[T], key: S
   }
 
   final def react(fun: T => Option[A] => Unit)(implicit tx: T): Disposable[T] = {
-    val r1 = attr.changed.react { implicit tx => upd =>
+    val r1 = attr.changed.react { implicit tx => upd => // RRR
       upd.changes.foreach {
         case MapObjLike.Added  (`key`, f) =>
           val opt = formValue(f)
