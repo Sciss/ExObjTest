@@ -2,11 +2,11 @@ package de.sciss.lucre.exnew
 
 import de.sciss.log.Level
 import de.sciss.lucre.exnew.ExElem.ProductReader
-import de.sciss.lucre.exnew.graph.Ex
+import de.sciss.lucre.exnew.graph.{Ex, Folder}
 import de.sciss.lucre.exnew.impl.ExObjBridgeImpl
 import de.sciss.lucre.expr.{IntExtensions, LucreExpr}
 import de.sciss.lucre.store.BerkeleyDB
-import de.sciss.lucre.{Adjunct, Durable, Expr, InMemory, IntObj, Log, Txn, Obj => LObj}
+import de.sciss.lucre.{Adjunct, BooleanObj, Durable, Expr, InMemory, IntObj, Log, Txn, Folder => LFolder, Obj => LObj}
 import de.sciss.serial.DataInput
 
 object Test {
@@ -19,6 +19,8 @@ object Test {
   def main(args: Array[String]): Unit = {
 //    LucreExpr .init()
     IntObj        .init()
+    BooleanObj    .init()
+    LFolder       .init()
     IntExtensions .init()
 //    Expr.Type     .init()
     Ex            .init()
@@ -38,6 +40,7 @@ object Test {
       }
     }
     Adjunct.addFactory(ObjBridge)
+    Adjunct.addFactory(Folder.Bridge)
 
     ExElem.addProductReaderSq({
       import graph.{BinaryOp => BinOp, UnaryOp => UnOp, TernaryOp => TernOp, _}
@@ -67,6 +70,7 @@ object Test {
         ExSeq,
         ExSeq.Count, ExSeq.DropWhile, ExSeq.Exists, ExSeq.Filter, ExSeq.FilterNot, ExSeq.Forall, ExSeq.Find,
         ExSeq.FindLast, ExSeq.IndexWhere, ExSeq.Select, ExSeq.SelectFirst, ExSeq.TakeWhile,
+        Folder, Folder.Size, Folder.IsEmpty, Folder.NonEmpty, Folder.Children, /*Folder.Append, Folder.Prepend,*/
         It,
         Obj.Empty, Obj.Attr, /*Obj.Attr.Update, Obj.Attr.UpdateOption, Obj.Attr.Set,*/ Obj.As, /*Obj.Make, Obj.Copy,*/
         QuaternaryOp, QuaternaryOp.SeqMkString, QuaternaryOp.SeqPatch,
@@ -104,8 +108,10 @@ object Test {
     val (inH, outH) = system.step { implicit tx =>
       import ExImport._
       import de.sciss.lucre.exnew.graph._
-      val ex: Ex[Int] = "in".attr(0) * 2
-      val input     = IntObj.newVar[T](0)
+//      val ex: Ex[Int] = "in".attr(0) * 2
+      val ex: Ex[Int] = "in".attr(Folder()).size
+//      val input     = IntObj.newVar[T](0)
+      val input     = LFolder[T]()
       val transform = IntExObj[T](ex)
       println("--- put 'in'")
       transform.attr.put("in", input)
@@ -124,7 +130,8 @@ object Test {
     system.step { implicit tx =>
       val in = inH()
       println("--- update 'in'")
-      in() = 1000
+//      in() = 1000
+      in.addLast(BooleanObj.newConst(false))
     }
 
     val v = system.step { implicit tx =>
