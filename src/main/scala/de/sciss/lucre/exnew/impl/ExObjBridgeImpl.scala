@@ -75,8 +75,9 @@ final class ExObjBridgeImpl[A, _Ex[~ <: Txn[~]] <: _Expr[~, A]](tpe: _Expr.Type[
 
   protected def encode(in: A): A = in
 
-  def cellView[T <: Txn[T]](obj: LObj[T], key: String)(implicit tx: T): CellView.Var[T, Option[A]] =
-    CellView.attrUndoOpt[T, A, _Ex](map = obj.attr, key = key)(tx, tpe)
+  override def cellView[T <: Txn[T]](obj: LObj[T], key: String)
+                                    (implicit tx: T, context: Context[T]): CellView.Var[T, Option[A]] =
+    CellView.attrUndoOpt[T, A, _Ex](map = obj.attr, key = key)(tx, tpe, context)
 }
 
 final class ExSeqObjBridgeImpl[A, _Ex[~ <: Txn[~]] <: _Expr[~, Vec[A]]](tpe: _Expr.Type[Vec[A], _Ex])
@@ -86,8 +87,9 @@ final class ExSeqObjBridgeImpl[A, _Ex[~ <: Txn[~]] <: _Expr[~, Vec[A]]](tpe: _Ex
 
   protected def encode(in: Seq[A]): Vec[A] = in.toIndexedSeq
 
-  def cellView[T <: Txn[T]](obj: LObj[T], key: String)(implicit tx: T): CellView.Var[T, Option[Seq[A]]] = {
-    val peer = CellView.attrUndoOpt[T, Vec[A], _Ex](map = obj.attr, key = key)(tx, tpe)
+  override def cellView[T <: Txn[T]](obj: LObj[T], key: String)
+                                    (implicit tx: T, context: Context[T]): CellView.Var[T, Option[Seq[A]]] = {
+    val peer = CellView.attrUndoOpt[T, Vec[A], _Ex](map = obj.attr, key = key)(tx, tpe, context)
     new CellView.Var[T, Option[Seq[A]]] {
       def update(v: Option[Seq[A]])(implicit tx: T): Unit =
         peer.update(v.map(_.toIndexedSeq))

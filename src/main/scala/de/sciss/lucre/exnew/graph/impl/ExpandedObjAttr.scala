@@ -14,6 +14,7 @@
 package de.sciss.lucre.exnew.graph.impl
 
 import de.sciss.lucre.Txn.peer
+import de.sciss.lucre.exnew.{CellView, Context}
 import de.sciss.lucre.exnew.graph.Obj
 import de.sciss.lucre.exnew.graph.Obj.Bridge
 import de.sciss.lucre.impl.IChangeGeneratorEvent
@@ -23,7 +24,8 @@ import de.sciss.model.Change
 import scala.concurrent.stm.Ref
 
 final class ExpandedObjAttr[T <: Txn[T], A](obj: IExpr[T, Obj], key: String, tx0: T)
-                                           (implicit protected val targets: ITargets[T], bridge: Bridge[A])
+                                           (implicit protected val targets: ITargets[T], bridge: Bridge[A],
+                                            context: Context[T])
   extends IExpr[T, Option[A]] with IChangeGeneratorEvent[T, Option[A]] with Caching {
 
   private[this] val valueRef  = Ref.make[Option[A]]()
@@ -42,8 +44,8 @@ final class ExpandedObjAttr[T <: Txn[T], A](obj: IExpr[T, Obj], key: String, tx0
 
   private def setObj(newObj: Obj, isInit: Boolean)(implicit tx: T): Option[A] = {
     // println(s"newObj = $newObj, bridge = $bridge, key = $key")
-    val newView = newObj.peer[T].map(p => bridge.cellView(p, key))
-    val obsNew  = newView.fold(Disposable.empty[T])(_.react { implicit tx => now => // RRR
+    val newView: Option[CellView.Var[T, Option[A]]] = newObj.peer[T].map(p => bridge.cellView(p, key))
+    val obsNew = newView.fold(Disposable.empty[T])(_.react { implicit tx => now => // RRR
       updateFromObj(now)
     })
     val now: Option[A] = newView.flatMap(_.apply())

@@ -35,11 +35,20 @@ would have to unwrap the whole thing. Let's restate the findings:
 
 ## Calls
 
-- `Obj.Attr` -> `ExpandedObjAttr` -> `obj.changed.--->...`
-- `Obs.Bridge.cellView` -> e.g. `ObjCellViewVarImpl`
-- `Attr` if `selfOption.isDefined` -> `StmObjAttrMapCellView`
-- `Attr` if `isNested` -> `StmObjCtxCellView` (`AbstractCtxCellView`)
-- `Obj.Bridge.contextCellView` -> `AbstractCtxCellView`
+- `Obj.Attr` -> `ExpandedObjAttr` -> `obj.changed.--->...` -- NOT; this is an `IExpr[T, graph.Obj]`
+- `Obs.Bridge.cellView` -> e.g. `ObjCellViewVarImpl` -- OK
+- `Attr` if `selfOption.isDefined` -> `StmObjAttrMapCellView` -- OK
+- `Attr` if `isNested` -> `StmObjCtxCellView` (`AbstractCtxCellView`) -- irrelevant
+- `Obj.Bridge.contextCellView` -> `AbstractCtxCellView` -- irrelevant
+- `CellViewImpl.AttrImpl`
+
+These are the main types involved in the entire API; e.g. the graph element `Folder` uses
+`ObjCellViewVarImpl` and `AbstractCtxCellView`. It's expanded class uses a `setObj` call that
+uses `lObj.changed.react` to install the listeners.
+
+Note that `AbstractCtxCellView` purely operates on `Context.Attr`, and not on an object's
+`AttrMap`; therefore it can be removed from the equation (it does not need changes). Therefore,
+it also applies to its subclasses like `StmObjCtxCellView`.
 
 ## Dynamic
 
@@ -47,7 +56,9 @@ The problematic bit is updating the objects that are observed. Say `"in".attr(0)
 exists. Now we would gather in the test expansion the event listeners for the attribute map as well as for
 the particular `IntObj` found in the attribute map's entry. Now the object is replaced, eventually resulting
 in a `pullUpdate` of the wrapping ex obj. This would cause in some form of caching `IExpr` a kind of
-`setObj` method to be called, disposing the old listener and installing a new listener. Basically the
-ex obj has a list of events it listens to, and the call to `value` or `pullUpdate` produces a new such list;
-this list may be different from the old list; in that case, we would have to unregister `oldList diff newList`,
-and newly register `newList diff oldList`.
+`setObj` method to be called, disposing the old listener and installing a new listener (see previous section
+for the example of `Folder`).
+
+Basically the ex obj has a list of events it listens to, and the call to `value` or `pullUpdate` produces a new
+such list;  this list may be different from the old list; in that case, we would have to unregister
+`oldList diff newList`, and newly register `newList diff oldList`.

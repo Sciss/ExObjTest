@@ -13,14 +13,21 @@
 
 package de.sciss.lucre.exnew.graph.impl
 
-import de.sciss.lucre.exnew.CellView
+import de.sciss.lucre.exnew.{CellView, Context}
 import de.sciss.lucre.{Disposable, Txn, Obj => LObj}
 
-// XXX TODO --- unfortunate that despite MapObjLike we have to distinguish
-// because LObj.AttrMap must be put into a handle...
-
-/** A `CellView[T, Option[LObj[T]]` built from an `LObj.attr` */
+/** A `CellView[T, Option[LObj[T]]` built from an `LObj.attr`.
+ *
+ * This is very similar to `StmObjCtxCellView`, which is built for a context
+ * attribute map, but the two classes have to be distinguished
+ * because `LObj.AttrMap` must be put into a handle, and because this
+ * forms a special case when used instead an `LObj` expression.
+ *
+ * Depending on the kind of `context` passed, this will transparently install event
+ * reactors or simply register the events used in the expression program.
+ */
 final class StmObjAttrMapCellView[T <: Txn[T]](attr0: LObj.AttrMap[T], key: String, tx0: T)
+                                              (implicit context: Context[T])
   extends CellView[T, Option[LObj[T]]] {
 
   private[this] val attrH = tx0.newHandle(attr0)
@@ -31,7 +38,7 @@ final class StmObjAttrMapCellView[T <: Txn[T]](attr0: LObj.AttrMap[T], key: Stri
     attr.get(key)
 
   def react(fun: T => Option[LObj[T]] => Unit)(implicit tx: T): Disposable[T] = {
-    attr.changed.react { implicit tx => upd =>  // RRR
+    context.reactTo(attr.changed) { implicit tx => upd =>
       upd.changes.foreach {
         case LObj.AttrAdded(`key`, obj) =>
           fun(tx)(Some(obj))
