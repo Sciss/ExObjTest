@@ -14,11 +14,12 @@
 package de.sciss.lucre.exnew
 
 import de.sciss.lucre.Event.Targets
+import de.sciss.lucre.Log.{event => logEvent}
 import de.sciss.lucre.edit.UndoManager
 import de.sciss.lucre.exnew.graph.Ex
 import de.sciss.lucre.exnew.impl.ContextMixin
 import de.sciss.lucre.impl.{ExprNodeImpl, ExprTypeExtension1, GeneratorEvent}
-import de.sciss.lucre.{Caching, Copy, Cursor, Disposable, Event, EventLike, IntObj, Obj, Pull, Source, Txn}
+import de.sciss.lucre.{Caching, Copy, Cursor, Disposable, Event, EventLike, IntObj, Obj, Pull, Source, Txn, Var}
 import de.sciss.model.Change
 import de.sciss.serial.{DataInput, DataOutput}
 
@@ -31,15 +32,10 @@ object IntExObj {
   def init(): Unit = _init
 
   def apply[T <: Txn[T]](ex: Ex[Int])(implicit tx: T): IntObj[T] = {
-//    val ex: Ex[Int] = "in".attr(0) * 2
-    //    val vr = Var(0)
-    //    val tr = Trig()
-    //    ex.changed --> Act(vr.inc, tr)
-    //    val res: Ex[Int] = vr.latch(tr)
-    val tgt = Targets[T]()
-    println("--> begin new")
-    val res = new IntEx[T](ex, tgt, tx)
-    println("<-- end new")
+    val targets = Targets[T]()
+    // println("--> begin new")
+    val res = new IntExNew[T](ex, targets, tx)
+    // println("<-- end new")
     res
   }
 
@@ -60,7 +56,7 @@ object IntExObj {
       event match {
         case e: Event[T, A] =>
           val isNew = _eventsSet.add(e)
-          println(s"REGISTER EVENT $e (new? $isNew)")
+          logEvent.debug(s"ExObj register $e")
           if (isNew) _eventsVec :+= e
         case _ => ()
       }
@@ -84,11 +80,10 @@ object IntExObj {
 
     override def readExtension[T <: Txn[T]](opId: Int, in: DataInput, targets: Targets[T])
                                            (implicit tx: T): IntObj[T] = {
-      val cookie = in.readShort()
-      require(cookie == INT_EX_SER_VERSION, s"Unexpected cookie $cookie")
-      val ref   = new ExElem.RefMapIn(in)
-      val ex    = ref.readEx[Int]()
-      new IntEx[T](ex, targets, tx)
+      // println("--> begin read")
+      val res = new IntExRead[T](targets, in)
+      // println("<-- end read")
+      res
     }
 
     override def name: String = "Ex[Int]"
@@ -96,32 +91,64 @@ object IntExObj {
     override final val opLo = -1
     override final val opHi = -1
   }
-  private final class IntEx[T <: Txn[T]](ex: Ex[Int], protected val targets: Targets[T], tx0: T)
-    extends IntObj[T] with ExprNodeImpl[T, Int] {
+
+  private final class IntExNew[T <: Txn[T]](protected val ex: Ex[Int], protected val targets: Targets[T], tx0: T)
+    extends IntEx[T] {
+
+    protected val sourcesRef: Var[T, Vec[Event[T, Any]]] = {
+      implicit val tx: T = tx0
+      id.newVar(Vec.empty[Event[T, Any]])
+    }
+
+    protected val valueRef: Var[T, A] = {
+      implicit val tx: T = tx0
+      id.newIntVar(0)
+    }
+
+    valueImpl(tx0)  // creates valueRef and sourceRef contents
+  }
+
+  private final class IntExRead[T <: Txn[T]](protected val targets: Targets[T], in0: DataInput)
+    extends IntEx[T] {
+
+    {
+      val cookie = in0.readShort()
+      require(cookie == INT_EX_SER_VERSION, s"Unexpected cookie $cookie")
+    }
+
+    protected val ex: Ex[Int] = {
+      val ref   = new ExElem.RefMapIn(in0)
+      ref.readEx[Int]()
+    }
+
+    protected val sourcesRef: Var[T, Vec[Event[T, Any]]] = id.readVar[Vec[Event[T, Any]]](in0)
+
+    protected val valueRef: Var[T, A] = id.readIntVar(in0)
+  }
+
+  private abstract class IntEx[T <: Txn[T]] extends IntObj[T] with ExprNodeImpl[T, Int] {
 
     type A = Int
 
     override def toString = s"Expr$id @${hashCode.toHexString}"
 
-    private[this] val sourcesRef = {
-      implicit val tx: T = tx0
-      id.newVar(Vec.empty[Event[T, Any]])
-    }
+    // ---- abstract ---
 
-    private[this] val valueCache = {
-      implicit val tx: T = tx0
-      id.newIntVar(valueImpl)
-    }
+    protected def ex        : Ex[A]
+    protected def sourcesRef: Var[T, Vec[Event[T, Any]]]
+    protected def valueRef  : Var[T, A]
+
+    // ---- impl ----
 
     override def value(implicit tx: T): Int = {
       val valueNew = valueImpl
-      val valueOld = valueCache()
-      if (valueNew != valueOld) valueCache() = valueNew
+      val valueOld = valueRef()
+      if (valueNew != valueOld) valueRef() = valueNew
       valueNew
     }
 
-    private def valueImpl(implicit tx: T): Int = {
-      val hc = new HeadlessContext[T](tx0.newHandle[IntObj[T]](this))
+    protected final def valueImpl(implicit tx: T): Int = {
+      val hc = new HeadlessContext[T](tx.newHandle[IntObj[T]](this))
       implicit val ctx: Context[T] = hc
       val peer      = ex.expand[T]
       val res       = peer.value
@@ -131,8 +158,8 @@ object IntExObj {
         sourcesRef()  = eventsNew
         val eventsAdd = eventsNew diff eventsOld
         val eventsRem = eventsOld diff eventsNew
-        println(s"REMOVE  EVENTS $eventsRem")
-        println(s"ADD     EVENTS $eventsAdd")
+        // logEvent.debug(s"ExObj remove $eventsRem")
+        // logEvent.debug(s"ExObj add    $eventsAdd")
         eventsRem.foreach(_ -/-> changed)
         eventsAdd.foreach(_ ---> changed)
       }
@@ -143,39 +170,26 @@ object IntExObj {
 
     object changed extends Changed with GeneratorEvent[T, Change[A]] with Caching {
       private[lucre] def pullUpdate(pull: Pull[T])(implicit tx: T): Option[Change[A]] = {
-        val valueOld  = valueCache()
+        val valueOld  = valueRef()
         val valueNew  = value  // updates cache
-        println(s"pullUpdate; $valueOld -> $valueNew")
+        logEvent.debug(s"ExObj pullUpdate; $valueOld -> $valueNew")
         val ch        = Change(valueOld, valueNew)
         ch.toOption
       }
     }
 
-    //    final def connect()(implicit tx: T): this.type = {
-    //      peer.changed ---> changed
-    //      this
-    //    }
-    //
-    //    private[this] def disconnect()(implicit tx: T): Unit = {
-    //      peer.changed -/-> changed
-    //    }
+    private def writeEx(out: DataOutput): Unit = {
+      val ref = new ExElem.RefMapOut(out)
+      ref.writeElem(ex)
+    }
 
     override protected def writeData(out: DataOutput): Unit = {
       out.writeByte(1)  // 'node not var'
       out.writeInt(-1)  // opId
       out.writeShort(INT_EX_SER_VERSION)
-      val ref = new ExElem.RefMapOut(out)
-//      {
-//        override protected def writeIdentifiedProduct(p: Product): Unit = {
-//          p match {
-//            case Attr.WithDefault(key, _) => println(s"EVENT KEY (d): $key")
-//            case Attr(key)                => println(s"EVENT KEY    : $key")
-//            case _ =>
-//          }
-//          super.writeIdentifiedProduct(p)
-//        }
-//      }
-      ref.writeElem(ex)
+      writeEx(out)
+      sourcesRef.write(out)
+      valueRef  .write(out)
     }
 
     override protected def disposeData()(implicit tx: T): Unit = {
@@ -186,7 +200,7 @@ object IntExObj {
     override private[lucre] def copy[Out <: Txn[Out]]()(implicit txIn: T, txOut: Out,
                                                         context: Copy[T, Out]): IntObj[Out] = {
       val newTgt = Event.Targets[Out]()
-      new IntEx[Out](ex, newTgt, txOut)
+      new IntExNew[Out](ex, newTgt, txOut)
     }
   }
 }

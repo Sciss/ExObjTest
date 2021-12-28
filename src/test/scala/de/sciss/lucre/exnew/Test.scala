@@ -1,19 +1,20 @@
 package de.sciss.lucre.exnew
 
+import de.sciss.log.Level
 import de.sciss.lucre.exnew.ExElem.ProductReader
 import de.sciss.lucre.exnew.graph.Ex
 import de.sciss.lucre.exnew.impl.ExObjBridgeImpl
 import de.sciss.lucre.expr.{IntExtensions, LucreExpr}
 import de.sciss.lucre.store.BerkeleyDB
-import de.sciss.lucre.{Adjunct, Durable, Expr, InMemory, IntObj, Txn, Obj => LObj}
+import de.sciss.lucre.{Adjunct, Durable, Expr, InMemory, IntObj, Log, Txn, Obj => LObj}
 import de.sciss.serial.DataInput
 
 object Test {
-//  type S = Durable
-//  type T = Durable.Txn
+  type S = Durable
+  type T = Durable.Txn
 
-  type S = InMemory
-  type T = InMemory.Txn
+//  type S = InMemory
+//  type T = InMemory.Txn
 
   def main(args: Array[String]): Unit = {
 //    LucreExpr .init()
@@ -94,9 +95,11 @@ object Test {
       )
     })
 
-    implicit val system: S = InMemory()
-//    val store = BerkeleyDB.tmp()
-//    implicit val system: S = Durable(store)
+//    Log.event.level = Level.Debug
+
+//    implicit val system: S = InMemory()
+    val store = BerkeleyDB.tmp()
+    implicit val system: S = Durable(store)
 
     val (inH, outH) = system.step { implicit tx =>
       import ExImport._
