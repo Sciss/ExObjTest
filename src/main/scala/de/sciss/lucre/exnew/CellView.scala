@@ -27,7 +27,8 @@ object CellView {
 
   def exprMap[T <: Txn[T], K, A, _Ex[~ <: Txn[~]] <: Expr[~, A]](map: MapObj[T, K, _Ex], key: K)
                                                                 (implicit tx: T, tpe: Expr.Type[A, _Ex],
-                                                                 keyType: MapObj.Key[K]): CellView[T, Option[A]] =
+                                                                 keyType: MapObj.Key[K],
+                                                                 context: Context[T]): CellView[T, Option[A]] =
     Impl.exprMap[T, K, A, _Ex](map, key)
 
   def attr[T <: Txn[T], A, E[~ <: Txn[~]] <: Expr[~, A]](map: Obj.AttrMap[T], key: String)
@@ -36,7 +37,8 @@ object CellView {
 
   /** Additionally uses undo manager when present. */
   def attrUndoOpt[T <: Txn[T], A, E[~ <: Txn[~]] <: Expr[~, A]](map: Obj.AttrMap[T], key: String)
-                                                               (implicit tx: T, tpe: Expr.Type[A, E]): CellView.Var[T, Option[A]] =
+                                                               (implicit tx: T, tpe: Expr.Type[A, E],
+                                                                context: Context[T]): CellView.Var[T, Option[A]] =
     Impl.attrUndoOpt[T, A, E](map, key)
 
   def name[T <: Txn[T]](obj: Obj[T])(implicit tx: T): CellView[T, String] = {

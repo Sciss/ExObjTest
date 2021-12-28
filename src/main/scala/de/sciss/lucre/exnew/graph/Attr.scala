@@ -47,7 +47,7 @@ object Attr extends ProductReader[Attr[_]] {
   }
 
   private[lucre] def resolveNestedIn[T <: Txn[T], A](objOpt: Option[LObj[T]], key: String)
-                                                    (implicit tx: T,
+                                                    (implicit tx: T, context: Context[T],
                                                      bridge: Obj.Bridge[A]): Option[CellView.Var[T, Option[A]]] = {
     @tailrec
     def loop(prev: Option[LObj[T]], sub: String): Option[CellView.Var[T, Option[A]]] =
@@ -114,7 +114,8 @@ object Attr extends ProductReader[Attr[_]] {
   // similar to `CellViewImpl.OptionOrElseImpl` but adding `.Var` support
   private final class NestedVarCellView[T <: Txn[T], A](firstP  : CellView[T, Option[LObj[T]]],
                                                         secondP : CellView[T, Option[LObj[T]]],
-                                                        lastSub : String)(implicit bridge: Obj.Bridge[A])
+                                                        lastSub : String)
+                                                       (implicit bridge: Obj.Bridge[A], context: Context[T])
     extends CellView.Var[T, Option[A]] {
 
     def apply()(implicit tx: T): Option[A] = {
@@ -127,8 +128,8 @@ object Attr extends ProductReader[Attr[_]] {
 
     def react(fun: T => Option[A] => Unit)(implicit tx: T): Disposable[T] = {
       val f: T => Option[LObj[T]] => Unit = { implicit tx => _ => fun(tx)(apply()) }
-      val r1 = firstP .react(f)
-      val r2 = secondP.react(f)
+      val r1 = firstP .react(f) // RRR
+      val r2 = secondP.react(f) // RRR
       Disposable.seq(r1, r2)
     }
 
@@ -153,8 +154,8 @@ object Attr extends ProductReader[Attr[_]] {
 
     def react(fun: T => Option[A] => Unit)(implicit tx: T): Disposable[T] = {
       val f: T => Option[A] => Unit = { implicit tx => _ => fun(tx)(apply()) }
-      val r1 = firstP .react(f)
-      val r2 = secondP.react(f)
+      val r1 = firstP .react(f) // RRR
+      val r2 = secondP.react(f) // RRR
       Disposable.seq(r1, r2)
     }
 
@@ -191,11 +192,11 @@ object Attr extends ProductReader[Attr[_]] {
             loop(childView, next, tail)
         }
 
-      val ctxHead             = new StmObjCtxCellView[T](ctx.attr, head)
+      val ctxHead = new StmObjCtxCellView[T](ctx.attr, head)
       val (ctxFullP, lastSub) = loop(ctxHead, firstSub, tail)
       ctx.selfOption match {
         case Some(self) =>
-          val objHead       = new StmObjAttrMapCellView[T](self.attr, head, tx)
+          val objHead = new StmObjAttrMapCellView[T](self.attr, head, tx)
           val (objFullP, _) = loop(objHead, firstSub, tail)
           new NestedVarCellView(ctxFullP, objFullP, lastSub)
 
@@ -205,22 +206,19 @@ object Attr extends ProductReader[Attr[_]] {
           })
       }
 
-    } else {
+    } else {  // not nested
       ctx.selfOption match {
         case Some(self) =>
           val firstP  = bridge.contextCellView[T](key)
           val secondP = bridge.cellView(self, key)
           val opt: Option[Form[T]] = ctx.attr.get(key)
-          /*val firstVr =*/ opt match {
-          case Some(ex: Var.Expanded[T, _]) =>
-            // work-around for Scala 3.0.2:
-            new FlatVarCellView(firstP, Some(ex), secondP)
-          // Some(ex)
-          case _                            =>
-            new FlatVarCellView(firstP, None, secondP)
-          // None
-        }
-        // new FlatVarCellView(firstP, firstVr, secondP)
+          opt match {
+            case Some(ex: Var.Expanded[T, _]) =>
+              // work-around for Scala 3.0.2:
+              new FlatVarCellView(firstP, Some(ex), secondP)
+            case _                            =>
+              new FlatVarCellView(firstP, None, secondP)
+          }
 
         case None =>  // if there is no 'self', simply give up on the idea of attributes
           CellView.Var.empty
@@ -274,7 +272,7 @@ object Attr extends ProductReader[Attr[_]] {
 
       private[this] val ref = Ref(attrView()(tx0))
 
-      private[this] val obsAttr = attrView.react { implicit tx => now =>
+      private[this] val obsAttr = attrView.react { implicit tx => now =>  // RRR
         val before  = ref.swap(now)(tx.peer)
         if (before != now) {
           val before1   = before.getOrElse(default.value)
@@ -331,7 +329,7 @@ object Attr extends ProductReader[Attr[_]] {
 
     private[this] val ref = Ref(value(tx0))
 
-    private[this] val obsAttr = attrView.react { implicit tx => now =>
+    private[this] val obsAttr = attrView.react { implicit tx => now =>  // RRR
       val before = ref.swap(now)(tx.peer)
       val ch = Change(before, now)
       // println(s"Attr.Expanded change $ch")

@@ -16,9 +16,6 @@ package de.sciss.lucre.exnew.graph.impl
 import de.sciss.lucre.exnew.{CellView, Context, graph}
 import de.sciss.lucre.{Disposable, ExprLike, Form, MapObjLike, Txn, Obj => LObj}
 
-// XXX TODO --- unfortunate that despite MapObjLike we have to distinguish
-// because LObj.AttrMap must be put into a handle...
-
 abstract class AbstractCtxCellView[T <: Txn[T], A](attr: Context.Attr[T], key: String)
   extends CellView/*.Var*/[T, Option[A]] {
 
@@ -28,22 +25,6 @@ abstract class AbstractCtxCellView[T <: Txn[T], A](attr: Context.Attr[T], key: S
   protected def tryParseObj  (obj  : LObj[T] )(implicit tx: T): Option[A]
 
   // ---- impl ----
-
-  //  def update(v: Option[A])(implicit tx: T): Unit =
-  //    v.foreach { value =>
-  //      attr.get(key).foreach {
-  //        case ex: graph.Var.Expanded[T, _] =>
-  //          def inner[A1](vr: graph.Var.Expanded[T, A1]): Unit =
-  //            vr.fromAny.fromAny(value).foreach { valueT =>
-  //              // XXX TODO --- support UndoManager
-  //              vr.update(new graph.Const.Expanded(valueT))
-  //            }
-  //
-  //          inner(ex)
-  //
-  //        case _ =>
-  //      }
-  //    }
 
   final def apply()(implicit tx: T): Option[A] =
     attr.get(key).flatMap(formValue)
@@ -55,7 +36,7 @@ abstract class AbstractCtxCellView[T <: Txn[T], A](attr: Context.Attr[T], key: S
   }
 
   final def react(fun: T => Option[A] => Unit)(implicit tx: T): Disposable[T] = {
-    val r1 = attr.changed.react { implicit tx => upd =>
+    val r1 = attr.changed.react { implicit tx => upd => // RRR
       upd.changes.foreach {
         case MapObjLike.Added  (`key`, f) =>
           val opt = formValue(f)
@@ -86,7 +67,13 @@ abstract class AbstractCtxCellView[T <: Txn[T], A](attr: Context.Attr[T], key: S
   }
 }
 
-/** A `CellView[T, Option[LObj[T]]` built from a `Context`. */
+/** A `CellView[T, Option[LObj[T]]` built from a `Context`.
+ *
+ * This is very similar to `StmObjAttrMapCellView`, which is built for the
+   * attribute map of a `lucre.Obj` instead of a context, but the two classes have to be distinguished
+ * because `lucre.Obj.AttrMap` must be put into a handle, and because there
+ * a special case exists when it used instead an `LObj` expression.
+ */
 final class StmObjCtxCellView[T <: Txn[T]](attr: Context.Attr[T], key: String)
   extends AbstractCtxCellView[T, LObj[T]](attr, key) {
 

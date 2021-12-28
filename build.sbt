@@ -3,7 +3,7 @@ lazy val baseNameL        = baseName.toLowerCase
 lazy val projectVersion   = "0.1.0-SNAPSHOT"
 
 lazy val deps = new {
-  val lucre = "4.5.3"
+  val lucre = "4.5.4-SNAPSHOT"
 }
 
 // sonatype plugin requires that these are in global
@@ -40,6 +40,7 @@ lazy val root = project.withId(baseNameL).in(file("."))
     libraryDependencies ++= Seq(
       "de.sciss" %% "lucre-core" % deps.lucre,
       "de.sciss" %% "lucre-expr" % deps.lucre,
+      "de.sciss" %% "lucre-bdb"  % deps.lucre,
     ),
   )
 
