@@ -18,7 +18,7 @@ import de.sciss.lucre.edit.UndoManager
 import de.sciss.lucre.exnew.graph.Ex
 import de.sciss.lucre.exnew.impl.ContextMixin
 import de.sciss.lucre.impl.{ExprNodeImpl, ExprTypeExtension1, GeneratorEvent}
-import de.sciss.lucre.{Copy, Cursor, Disposable, Event, EventLike, IntObj, Obj, Pull, Source, Txn}
+import de.sciss.lucre.{Caching, Copy, Cursor, Disposable, Event, EventLike, IntObj, Obj, Pull, Source, Txn}
 import de.sciss.model.Change
 import de.sciss.serial.{DataInput, DataOutput}
 
@@ -26,6 +26,10 @@ import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.collection.mutable
 
 object IntExObj {
+  private lazy val _init: Unit = IntObj.registerExtension(IntEx)
+
+  def init(): Unit = _init
+
   def apply[T <: Txn[T]](ex: Ex[Int])(implicit tx: T): IntObj[T] = {
 //    val ex: Ex[Int] = "in".attr(0) * 2
     //    val vr = Var(0)
@@ -93,7 +97,7 @@ object IntExObj {
     override final val opHi = -1
   }
   private final class IntEx[T <: Txn[T]](ex: Ex[Int], protected val targets: Targets[T], tx0: T)
-    extends IntObj[T] with ExprNodeImpl[T, Int] /*with Caching*/ {
+    extends IntObj[T] with ExprNodeImpl[T, Int] {
 
     type A = Int
 
@@ -104,7 +108,19 @@ object IntExObj {
       id.newVar(Vec.empty[Event[T, Any]])
     }
 
+    private[this] val valueCache = {
+      implicit val tx: T = tx0
+      id.newIntVar(valueImpl)
+    }
+
     override def value(implicit tx: T): Int = {
+      val valueNew = valueImpl
+      val valueOld = valueCache()
+      if (valueNew != valueOld) valueCache() = valueNew
+      valueNew
+    }
+
+    private def valueImpl(implicit tx: T): Int = {
       val hc = new HeadlessContext[T](tx0.newHandle[IntObj[T]](this))
       implicit val ctx: Context[T] = hc
       val peer      = ex.expand[T]
@@ -115,22 +131,23 @@ object IntExObj {
         sourcesRef()  = eventsNew
         val eventsAdd = eventsNew diff eventsOld
         val eventsRem = eventsOld diff eventsNew
-        val c         = changed
         println(s"REMOVE  EVENTS $eventsRem")
         println(s"ADD     EVENTS $eventsAdd")
-        eventsRem.foreach(_ -/-> c)
-        eventsAdd.foreach(_ ---> c)
+        eventsRem.foreach(_ -/-> changed)
+        eventsAdd.foreach(_ ---> changed)
       }
       res
     }
 
-    value(tx0)
-
     override def tpe: Obj.Type = IntObj
 
-    object changed extends Changed with GeneratorEvent[T, Change[A]] {
+    object changed extends Changed with GeneratorEvent[T, Change[A]] with Caching {
       private[lucre] def pullUpdate(pull: Pull[T])(implicit tx: T): Option[Change[A]] = {
-        ??? // Some(pull.resolve[Change[A]])
+        val valueOld  = valueCache()
+        val valueNew  = value  // updates cache
+        println(s"pullUpdate; $valueOld -> $valueNew")
+        val ch        = Change(valueOld, valueNew)
+        ch.toOption
       }
     }
 
@@ -162,10 +179,7 @@ object IntExObj {
     }
 
     override protected def disposeData()(implicit tx: T): Unit = {
-      //      disconnect()
-//      obs .dispose()
-//      peer.dispose()
-//      ctx .dispose()
+      sourcesRef.swap(Vector.empty).foreach(_ -/-> changed)
     }
 
     /** Makes a deep copy of an element, possibly translating it to a different system `Out`. */
