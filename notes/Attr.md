@@ -62,3 +62,35 @@ for the example of `Folder`).
 Basically the ex obj has a list of events it listens to, and the call to `value` or `pullUpdate` produces a new
 such list;  this list may be different from the old list; in that case, we would have to unregister
 `oldList diff newList`, and newly register `newList diff oldList`.
+
+----
+
+# Notes 28-Dec-2021
+
+Here is the current run:
+
+```
+--> begin new
+REGISTER EVENT de.sciss.lucre.impl.TMapImpl$Impl$changed$@44ad6a12 (new? true)
+REMOVE  EVENTS Vector()
+ADD     EVENTS Vector(de.sciss.lucre.impl.TMapImpl$Impl$changed$@44ad6a12)
+<-- end   new
+--- put 'in'
+--- add react
+--- update 'in'
+--- call 'value'
+REGISTER EVENT de.sciss.lucre.impl.TMapImpl$Impl$changed$@44ad6a12 (new? true)
+REGISTER EVENT de.sciss.lucre.impl.ExprVarImpl$changed$@8bff60f4 (new? true)
+REMOVE  EVENTS Vector()
+ADD     EVENTS Vector(de.sciss.lucre.impl.ExprVarImpl$changed$@8bff60f4)
+OUTPUT now 2000
+```
+
+The problem here is that upon creation, the attribute map entry `"in"` has not been added yet,
+so there is only one event that we listen to. The "put 'in'" action appears before the `IntEx` has been
+connected, so (I think) that's why no event is observed (the event push does not yield any live reaction).
+The call to "add react" does not change anything. There are two possible solutions:
+
+- add `Caching`, so the `IntEx` always gets notified
+- or check the first reaction added via `react`, and internally update `value`. This might be tricky, as
+  there could be another `Event` in between, and then there is no way of knowing when `IntEx` is "hot".

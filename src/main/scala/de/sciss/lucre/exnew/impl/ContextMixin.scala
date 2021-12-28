@@ -139,4 +139,7 @@ final class ContextImpl[T <: Txn[T]](protected val selfH: Option[Source[T, Obj[T
   extends ContextMixin[T] {
 
   override def connect: Boolean = true
+
+  override def reactTo[A](event: EventLike[T, A])(fun: T => A => Unit)(implicit tx: T): Disposable[T] =
+    event.react(fun)
 }

@@ -17,6 +17,7 @@ object Test {
       val ex: Ex[Int] = "in".attr(0) * 2
       val input     = IntObj.newVar[T](0)
       val transform = IntExObj[T](ex)
+      println("--- put 'in'")
       transform.attr.put("in", input)
       val output    = IntObj.newVar[T](transform)
       (tx.newHandle(input), tx.newHandle(output))
@@ -24,6 +25,7 @@ object Test {
 
     system.step { implicit tx =>
       val out = outH()
+      println("--- add react")
       out.changed.react { implicit tx => upd =>
         println(s"OBSERVED: $upd")
       }
@@ -31,7 +33,15 @@ object Test {
 
     system.step { implicit tx =>
       val in = inH()
+      println("--- update 'in'")
       in() = 1000
     }
+
+    val v = system.step { implicit tx =>
+      val out = outH()
+      println("--- call 'value'")
+      out.value
+    }
+    println(s"OUTPUT now $v")
   }
 }

@@ -74,7 +74,7 @@ trait Context[T <: Txn[T]] extends Disposable[T] {
   /** Whether the event dispatch system should be connected or not. */
   def connect: Boolean
 
-  def reactTo[A](event: EventLike[T, A])(fun: T => A => Unit)(implicit tx: T): Disposable[T] = ???
+  def reactTo[A](event: EventLike[T, A])(fun: T => A => Unit)(implicit tx: T): Disposable[T]
 
 // EEE
 //  /** Prepares graph expansion by copying control properties over
